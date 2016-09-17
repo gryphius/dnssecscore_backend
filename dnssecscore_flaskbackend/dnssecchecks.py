@@ -310,19 +310,21 @@ class RRSIGForEachDSAlgorithm(TestBase):
 
 
     def do_we_have_what_we_need(self):
-        if not self.broker.have_completed('DS') || not self.broker.have_completed('DNSKEY'):
+        if not self.broker.have_completed('DS') or not self.broker.have_completed('DNSKEY'):
             return False
         return True
 
     def run_test(self):
-        algorithms = set()
+        ds_algorithms = set()
         for record in self.broker.get_records('DS'):
-            algorithms.add(record.algorithm)
+            ds_algorithms.add(record.algorithm)
 
-        num_algorithms = len(algorithms)
-        num_rrsigs = len(self.broker.get_rrsigs('DNSKEY'))
+        rrsig_algorithms = set()
+        for record in self.broker.get_rrsigs('DNSKEY'):
+            rrsig_algorithms.add(record.algorithm)
 
-        if num_algorithms != num_rrsigs:
+        diff = ds_algorithms - rrsig_algorithms
+        if len(diff) >= 1:
             self.result_type = RESULTTYPE_BAD
         else:
             self.result_type = RESULTTYPE_GOOD
