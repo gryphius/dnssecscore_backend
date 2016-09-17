@@ -379,4 +379,6 @@ class NumberOfDNSKEYs(TestBase):
 
 all_tests=[AreWeSigned, HaveDS, DSDigestAlgo, RRSIGTimes,
 RRSIGForEachDSAlgorithm, DanglingDS, NumberOfDNSKEYs,
-DummyInfo, DummyGood, DummyBad,]
+]
+
+# Dummies we can use for testing DummyInfo, DummyGood, DummyBad,]
