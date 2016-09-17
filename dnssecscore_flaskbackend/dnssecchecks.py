@@ -330,6 +330,34 @@ class RRSIGForEachDSAlgorithm(TestBase):
         else:
             self.result_type = RESULTTYPE_GOOD
 
+class DanglingDS(TestBase):
+    def __init__(self, broker):
+        TestBase.__init__(self, broker)
+        self.name = "Check if there are the same key tags in DS and DNSKEY."
+        self.description = "This test will test if the same key tags exist in both DS record an the DNSKEYs."
+
+
+    def do_we_have_what_we_need(self):
+        if not self.broker.have_completed("DS") or not self.broker.have_completed("DNSKEY"):
+            return False
+        return True
+
+    def run_test(self):
+        ds_key_tags = set()
+        for record in self.broker.get_records("DS"):
+            ds_key_tags.add(record["key_tag"])
+
+        dnskey_key_tags = set()
+        for record in self.broker.get_record("DNSKEY"):
+            dnskey_key_tags.add(record["key_tag"])
+
+        diff = ds_key_tags - dnskey_key_tags
+        if len(diff) >= 1:
+            self.result_type = RESULTTYPE_NEUTRAL
+            self.result_messages.append("There exists a dangling key tag %s in the DS record.", diff)
+        else:
+            self.result_type = RESULTTYPE_GOOD
+
 all_tests=[AreWeSigned, HaveDS, DSDigestAlgo, RRSIGTimes,
-RRSIGForEachDSAlgorithm,
+RRSIGForEachDSAlgorithm, DanglingDS
 DummyInfo, DummyGood, DummyBad,]
