@@ -1,4 +1,5 @@
 import dns.resolver
+import pprint
 
 from dns.resolver import NoAnswer
 
@@ -30,8 +31,7 @@ class DNSInfoBroker(object):
         self.load_single_record('DNSKEY')
         self.load_single_record('SOA')
 
-        print self.domaininfo
-        print self.have_completed('DNSKEY')
+        print pprint.pformat(self.domaininfo)
 
 
     def have_completed(self, rtype):
@@ -58,6 +58,9 @@ class DNSInfoBroker(object):
             d = dict()
             d['text'] = rdata.to_text()
             newinfo.append(d)
+
+            if rtype=='DNSKEY':
+                d['flags']=rdata.flags
 
         self.domaininfo[rtype] = newinfo
 
@@ -180,9 +183,6 @@ class HaveDS(TestBase):
             return
 
         self.result_type = RESULTTYPE_GOOD
-
-
-
 
 
 

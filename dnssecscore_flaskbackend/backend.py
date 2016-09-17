@@ -2,6 +2,7 @@ from flask import Flask, jsonify
 app = Flask(__name__)
 from dnssecchecks import all_tests, DNSInfoBroker, TESTRESULTTYPE_ERROR, TESTRESULTTYPE_SECURE, RESULTTYPE_BAD, RESULTTYPE_WARNING
 import time
+import pprint
 
 @app.route("/testdomain")
 def testdomain():
