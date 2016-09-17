@@ -45,7 +45,7 @@ if True:
     #request.flags |= dns.flags.DO
     #request.find_rrset(request.additional, dns.name.root, ADDITIONAL_RDCLASS,
     #                 dns.rdatatype.OPT, create=True, force_unique=True)
-    response = dns.query.udp(request, '8.8.8.8')
+    response = dns.query.udp(request, 'localhost')
     #for rdata in response.answer:
     #    # print 'Host', rdata.exchange, 'has preference', rdata.preference
     #   # print dir(rdata)

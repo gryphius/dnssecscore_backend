@@ -21,9 +21,10 @@ TESTRESULTTYPE_ERROR = "E"
 ADS_BACKEND_AVAILABLE=False # check if our cool dnslookup to dict function is ready
 USE_ADS_BACKEND_IF_POSSIBLE = True
 try:
-    from dnssecscore_flaskbackend.all_the_shiet import all_the_shiet as do_all_lookups
+    from all_the_shiet import all_the_shiet as do_all_lookups
     ADS_BACKEND_AVAILABLE = True
-except:
+except Exception,e:
+    print "Could not load ads backend: %s"%str(e)
     pass
 
 class DNSInfoBroker(object):
@@ -37,8 +38,10 @@ class DNSInfoBroker(object):
 
 
         if ADS_BACKEND_AVAILABLE and USE_ADS_BACKEND_IF_POSSIBLE:
+            print "Running DNS lookup using ADS Backend"
             self.domaininfo = do_all_lookups(self.domain)
         else:
+            print "Running DNS lookup using our own dummy"
             self.load_single_record('DS')
             self.load_single_record('DNSKEY')
             self.load_single_record('SOA')
@@ -49,10 +52,14 @@ class DNSInfoBroker(object):
         return rtype.upper() in self.domaininfo
 
     def is_nxdomain(self, rtype): #or empty
-        return self.domaininfo[rtype.upper()] == NXDOMAIN
+        return self.domaininfo[rtype.upper()] in ( None, {} )
 
     def get_records(self, rtype):
-        return self.domaininfo[rtype.upper()]
+        return self.domaininfo[rtype.upper()]['RR']
+
+    def get_rrsigs(self, rtype):
+        return self.domaininfo[rtype.upper()]['RRSIGS']
+
 
     def load_single_record(self, rtype):
         rtype = rtype.upper()
@@ -73,7 +80,7 @@ class DNSInfoBroker(object):
             if rtype=='DNSKEY':
                 d['flags']=rdata.flags
 
-        self.domaininfo[rtype] = newinfo
+        self.domaininfo[rtype]= {'RR' : newinfo }
 
 
 class TestBase(object):
@@ -193,9 +200,51 @@ class HaveDS(TestBase):
 
         self.result_type = RESULTTYPE_GOOD
 
+class DSDigestAlgo(TestBase):
+    def __init__(self, broker):
+        TestBase.__init__(self, broker)
+        self.name = "Check DS records algorithm"
+        self.description = "This test checks the DS hash algorithms used. SHA1 is discouraged, SHA2 must be available, optionally 3 and 4"
+
+    def do_we_have_what_we_need(self):
+        if not self.broker.have_completed('DS'):
+            return False
+        return True
+
+    def run_test(self):
+        if self.broker.is_nxdomain('DS'):
+            self.result_type = RESULTTYPE_BAD
+            self.shortcircuit = TESTRESULTTYPE_TRUSTISSUE
+            self.result_messages.append("No DS records for %s. This probably means that this domain is an island of security and we can not actually verify it"%self.broker.domain)
+            return
+
+        restype = None
+
+        dsrecs = self.broker.get_records('DS')
+
+        have_typetwo = False
+        for ds in dsrecs:
+            digest_type = ds.get('digest_type')
+            if digest_type == 1:
+                restype = RESULTTYPE_BAD
+                self.result_messages.append('There is a DS record with insecure hash type 1')
+
+            if digest_type == 2:
+                have_typetwo = True
+
+        if not have_typetwo:
+            restype = RESULTTYPE_BAD
+            self.result_messages.append("DS hash type 2 must be available, but it isn't")
+
+        if restype==None:
+            restype = RESULTTYPE_GOOD
+
+        self.result_type = restype
 
 
-all_tests=[AreWeSigned, HaveDS,
+
+
+all_tests=[AreWeSigned, HaveDS, DSDigestAlgo,
 
     DummyInfo, DummyGood, DummyBad,
             ]
