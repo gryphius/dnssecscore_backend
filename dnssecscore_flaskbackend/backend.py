@@ -69,7 +69,7 @@ class DNSSECTest(object):
 
         resultdict["result"] = self.result_type
         resultdict["score"] = int(score)
-        
+
         return resultdict
 
 
@@ -78,4 +78,4 @@ class DNSSECTest(object):
 
 if __name__ == "__main__":
     app.debug = True
-    app.run()
+    app.run(host= '0.0.0.0')
