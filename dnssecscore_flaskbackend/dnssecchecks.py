@@ -348,7 +348,7 @@ class DanglingDS(TestBase):
             ds_key_tags.add(record["key_tag"])
 
         dnskey_key_tags = set()
-        for record in self.broker.get_record("DNSKEY"):
+        for record in self.broker.get_records("DNSKEY"):
             dnskey_key_tags.add(record["key_tag"])
 
         diff = ds_key_tags - dnskey_key_tags
@@ -379,4 +379,6 @@ class NumberOfDNSKEYs(TestBase):
 
 all_tests=[AreWeSigned, HaveDS, DSDigestAlgo, RRSIGTimes,
 RRSIGForEachDSAlgorithm, DanglingDS, NumberOfDNSKEYs,
-DummyInfo, DummyGood, DummyBad,]
+]
+
+# Dummies we can use for testing DummyInfo, DummyGood, DummyBad,]
