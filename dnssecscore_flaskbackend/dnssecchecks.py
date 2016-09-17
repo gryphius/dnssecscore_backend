@@ -259,6 +259,7 @@ class RRSIGTimes(TestBase):
         minimum_days_left = 5
 
         problem = False
+        warning = False
 
         all_inceptions=[]
         all_expirations=[]
@@ -275,7 +276,7 @@ class RRSIGTimes(TestBase):
                     self.result_messages.append("RRSIG for %s key tag %s is not yet valid"%(rdtype,rrsig['key_tag'])) #
 
                 if abs(inception-now)<clock_skew_offset:
-                    problem = True
+                    warning = True
                     self.result_messages.append(
                         "RRSIG for %s key tag %s is dangerously close to now - clock skew on resolvers will cause validation failure" % (rdtype, rrsig['key_tag']))  #
 
@@ -291,13 +292,15 @@ class RRSIGTimes(TestBase):
             "RRSIG will expire in %s days" % (days_until_expiration) ) #
 
         if days_until_expiration < minimum_days_left:
-            problem = True
+            warning = True
             self.result_messages.append(
             "RRSIG are dangerously close to expiration, resign the zone!" )
 
 
         if problem:
             self.result_type = RESULTTYPE_BAD
+        elif warning:
+            self.result_type = RESULTTYPE_WARNING
         else:
             self.result_type = RESULTTYPE_GOOD
 
