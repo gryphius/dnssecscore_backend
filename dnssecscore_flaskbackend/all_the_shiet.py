@@ -151,6 +151,54 @@ def ds_shiet(domain, dns_server = "8.8.8.8", output = False):
 
     return response
 
+def nsec3param_shiet(domain, dns_server = "8.8.8.8", output = False):
+    nsec3param_request = dns.message.make_query(domain, dns.rdatatype.NSEC3PARAM)
+    nsec3param_request.want_dnssec()
+    nsec3param_answers = dns.query.udp(nsec3param_request, dns_server)
+    if nsec3param_answers.flags & dns.flags.TC:
+        nsec3param_answers = dns.query.tcp(nsec3param_request, dns_server)
+    nsec3param_answers = nsec3param_answers.answer
+
+    if output:
+        print "NSEC3PARAM" #hash alg, num of iter, salt, ttl
+        print "============================"
+    response = dict()
+    if len(nsec3param_answers) >= 1:
+        response['RR'] = []
+        for rdata in nsec3param_answers[0]:
+            response['RR'].append({
+                "algorithm" : rdata.algorithm,
+                "iterations" : rdata.iterations,
+                "salt" : rdata.salt,
+                "ttl" : nsec3param_answers[0].ttl
+            })
+            if output:
+                print dir(rdata)
+                print "  Algorithm: ", rdata.algorithm
+                print "  Iterations: ", rdata.iterations
+                print "  Salt: ", rdata.salt
+                print "  TTL: ", nsec3param_answers[0].ttl
+                print "----------------------------"
+    if len(nsec3param_answers) >= 2:
+        response['RRSIG'] = []
+        for rdata in nsec3param_answers[1]:
+            response['RRSIG'].append({
+                "algorithm" : rdata.algorithm,
+                "inception" : rdata.inception,
+                "key_tag" : rdata.key_tag,
+                "expiration" : rdata.expiration,
+                "ttl" : nsec3param_answers[1].ttl
+            })
+            if output:
+                print "  Algorithm: ", rdata.algorithm
+                print "  Inception: ", rdata.inception
+                print "  Key tag: ", rdata.key_tag
+                print "  Expiration: ", rdata.expiration
+                print "  TTL: ", nsec3param_answers[1].ttl
+                print "----------------------------"
+
+    return response
+
 
 
 def all_the_shiet(domain, dns_server = "8.8.8.8", output = False):
@@ -162,11 +210,13 @@ def all_the_shiet(domain, dns_server = "8.8.8.8", output = False):
     dnskey_result = pool.apply_async(dnskey_shiet, (domain, dns_server, output))
     soa_result = pool.apply_async(soa_shiet, (domain, dns_server, output))
     ds_result = pool.apply_async(ds_shiet, (domain, dns_server, output))
+    nsec3param_result = pool.apply_async(nsec3param_shiet, (domain, dns_server, output))
 
     response = dict()
     response['DNSKEY'] = dnskey_result.get()
     response['SOA'] = soa_result.get()
     response['DS'] = ds_result.get()
+    response['NSEC3PARAM'] = nsec3param_result.get()
 
     if output:
         pprint.pprint(response)
