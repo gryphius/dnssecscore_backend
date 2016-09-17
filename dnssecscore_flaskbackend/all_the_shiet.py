@@ -10,7 +10,10 @@ import multiprocessing.pool
 def dnskey_shiet(domain, dns_server = "8.8.8.8", output = False):
     dnskey_request = dns.message.make_query(domain, dns.rdatatype.DNSKEY)
     dnskey_request.want_dnssec()
-    dnskey_answers = dns.query.udp(dnskey_request, dns_server).answer
+    dnskey_answers = dns.query.udp(dnskey_request, dns_server)
+    if dnskey_answers.flags & dns.flags.TC:
+        dnskey_answers = dns.query.tcp(dnskey_request, dns_server)
+    dnskey_answers = dnskey_answers.answer
 
     if output:
         print "DNSKEY"
@@ -30,6 +33,7 @@ def dnskey_shiet(domain, dns_server = "8.8.8.8", output = False):
                 print "  Algorithm: ", rdata.algorithm
                 print "  Flags: ", rdata.flags
                 print "  Key: ", base64.b64encode(rdata.key)
+                print "  Key size: ", len(base64.b64encode(rdata.key)) * 64
                 print "  Protocol: ", rdata.protocol
                 print "  TTL: ", dnskey_answers[0].ttl
                 print "----------------------------"
@@ -56,7 +60,10 @@ def dnskey_shiet(domain, dns_server = "8.8.8.8", output = False):
 def soa_shiet(domain, dns_server = "8.8.8.8", output = False):
     soa_request = dns.message.make_query(domain, dns.rdatatype.SOA)
     soa_request.want_dnssec()
-    soa_answers = dns.query.udp(soa_request, dns_server).answer
+    soa_answers = dns.query.udp(soa_request, dns_server)
+    if soa_answers.flags & dns.flags.TC:
+        soa_answers = dns.query.tcp(soa_request, dns_server)
+    soa_answers = soa_answers.answer
 
     if output:
         print "SOA"
@@ -96,7 +103,10 @@ def soa_shiet(domain, dns_server = "8.8.8.8", output = False):
 def ds_shiet(domain, dns_server = "8.8.8.8", output = False):
     ds_request = dns.message.make_query(domain, dns.rdatatype.DS)
     ds_request.want_dnssec()
-    ds_answers = dns.query.udp(ds_request, dns_server).answer
+    ds_answers = dns.query.udp(ds_request, dns_server)
+    if ds_answers.flags & dns.flags.TC:
+        ds_answers = dns.query.tcp(ds_request, dns_server)
+    ds_answers = ds_answers.answer
 
     if output:
         print "DS"
