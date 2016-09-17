@@ -302,10 +302,31 @@ class RRSIGTimes(TestBase):
         else:
             self.result_type = RESULTTYPE_GOOD
 
+class RRSIGForEachDSAlgorithm(TestBase):
+    def __init__(self, broker):
+        TestBase.__init__(self, broker)
+        self.name = "Check if there is an RRSIG in DNSKEY for each algorithm in DS."
+        self.description = "This test will test if there exists an RRSIG in DNSKEY for every algorithm that is used in DS."
 
 
+    def do_we_have_what_we_need(self):
+        if not self.broker.have_completed('DS') || not self.broker.have_completed('DNSKEY'):
+            return False
+        return True
 
-all_tests=[AreWeSigned, HaveDS, DSDigestAlgo,RRSIGTimes,
+    def run_test(self):
+        algorithms = set()
+        for record in self.broker.get_records('DS'):
+            algorithms.add(record.algorithm)
 
-    DummyInfo, DummyGood, DummyBad,
-            ]
+        num_algorithms = len(algorithms)
+        num_rrsigs = len(self.broker.get_rrsigs('DNSKEY'))
+
+        if num_algorithms != num_rrsigs:
+            self.result_type = RESULTTYPE_BAD
+        else:
+            self.result_type = RESULTTYPE_GOOD
+
+all_tests=[AreWeSigned, HaveDS, DSDigestAlgo, RRSIGTimes,
+RRSIGForEachDSAlgorithm,
+DummyInfo, DummyGood, DummyBad,]

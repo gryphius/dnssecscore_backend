@@ -29,9 +29,9 @@ def dnskey_shiet(domain, dns_server = "8.8.8.8", output = False):
                 "algorithm" : rdata.algorithm,
                 "flags" : rdata.flags,
                 "key" : b64key,
+                "key_tag" : calc_keyid(rdata.flags, rdata.protocol, rdata.algorithm, b64key),
                 "protocol" : rdata.protocol,
                 "ttl" : dnskey_answers[0].ttl,
-                "key_tag" : calc_keyid(rdata.flags, rdata.protocol, rdata.algorithm, b64key),
             })
             if output:
                 print "  Algorithm: ", rdata.algorithm
