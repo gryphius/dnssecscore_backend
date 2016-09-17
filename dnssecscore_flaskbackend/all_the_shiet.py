@@ -6,6 +6,8 @@ import base64
 import time
 import pprint
 import multiprocessing.pool
+import struct
+
 
 def dnskey_shiet(domain, dns_server = "8.8.8.8", output = False):
     dnskey_request = dns.message.make_query(domain, dns.rdatatype.DNSKEY)
@@ -22,12 +24,14 @@ def dnskey_shiet(domain, dns_server = "8.8.8.8", output = False):
     if len(dnskey_answers) >= 1:
         response['RR'] = []
         for rdata in dnskey_answers[0]:
+            b64key = base64.b64encode(rdata.key)
             response['RR'].append({
                 "algorithm" : rdata.algorithm,
                 "flags" : rdata.flags,
-                "key" : base64.b64encode(rdata.key),
+                "key" : b64key,
                 "protocol" : rdata.protocol,
-                "ttl" : dnskey_answers[0].ttl
+                "ttl" : dnskey_answers[0].ttl,
+                "key_tag" : calc_keyid(rdata.flags, rdata.protocol, rdata.algorithm, b64key),
             })
             if output:
                 print "  Algorithm: ", rdata.algorithm
@@ -168,3 +172,33 @@ def all_the_shiet(domain, dns_server = "8.8.8.8", output = False):
         pprint.pprint(response)
 
     return response
+
+
+#from https://www.v13.gr/blog/?p=239
+def calc_keyid(flags, protocol, algorithm, st):
+    """
+    @param owner        The corresponding domain
+    @param flags        The flags of the entry (256 or 257)
+    @param protocol     Should always be 3
+    @param algorithm    Should always be 5
+    @param st           The public key as listed in the DNSKEY record.
+                        Spaces are removed.
+    @return The key tag
+    """
+    # Remove spaces and create the wire format
+    st0 = st.replace(' ', '')
+    st2 = struct.pack('!HBB', int(flags), int(protocol), int(algorithm))
+    st2 += base64.b64decode(st0)
+
+    # Calculate the tag
+    cnt = 0
+    for idx in xrange(len(st2)):
+        s = struct.unpack('B', st2[idx])[0]
+        if (idx % 2) == 0:
+            cnt += s << 8
+        else:
+            cnt += s
+
+    ret = ((cnt & 0xFFFF) + (cnt >> 16)) & 0xFFFF
+
+    return (ret)
