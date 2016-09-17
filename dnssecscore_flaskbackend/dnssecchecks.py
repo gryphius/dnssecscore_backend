@@ -348,7 +348,7 @@ class DanglingDS(TestBase):
             ds_key_tags.add(record["key_tag"])
 
         dnskey_key_tags = set()
-        for record in self.broker.get_records("DNSKEY"):
+        for record in self.broker.get_record("DNSKEY"):
             dnskey_key_tags.add(record["key_tag"])
 
         diff = ds_key_tags - dnskey_key_tags
@@ -358,8 +358,25 @@ class DanglingDS(TestBase):
         else:
             self.result_type = RESULTTYPE_GOOD
 
-all_tests=[AreWeSigned, HaveDS, DSDigestAlgo, RRSIGTimes,
-RRSIGForEachDSAlgorithm, DanglingDS,
-]
+class NumberOfDNSKEYs(TestBase):
+    def __init__(self, broker):
+        TestBase.__init__(self, broker)
+        self.name = "Check if there are too many DNSKEYs."
+        self.description = "This test will test if the domain has more than three DNSKEYs (three is plenty)."
 
-# DummyInfo, DummyGood, DummyBad,
+
+    def do_we_have_what_we_need(self):
+        if not self.broker.have_completed("DNSKEY"):
+            return False
+        return True
+
+    def run_test(self):
+        if len(self.broker.get_records("DNSKEY")) > 3:
+            self.result_type = RESULTTYPE_BAD
+            self.result_messages.append("Too many DNSKEYs present. Not more than three are needed (zone signing key, key signing key and a rollover key).")
+        else:
+            self.result_type = RESULTTYPE_GOOD
+
+all_tests=[AreWeSigned, HaveDS, DSDigestAlgo, RRSIGTimes,
+RRSIGForEachDSAlgorithm, DanglingDS, NumberOfDNSKEYs,
+DummyInfo, DummyGood, DummyBad,]
