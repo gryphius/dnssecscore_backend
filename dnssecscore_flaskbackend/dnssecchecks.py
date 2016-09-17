@@ -1,5 +1,6 @@
 import dns.resolver
 import pprint
+import time
 
 from dns.resolver import NoAnswer
 
@@ -241,10 +242,70 @@ class DSDigestAlgo(TestBase):
 
         self.result_type = restype
 
+class RRSIGTimes(TestBase):
+    def __init__(self, broker):
+        TestBase.__init__(self, broker)
+        self.name = "Check RRSIG inception and expiration times"
+        self.description = "This test will test if your RRSIGs are close to expiration or the inception could be affected by clock skew"
+
+
+    def do_we_have_what_we_need(self):
+        if not self.broker.have_completed('SOA'):
+            return False
+        return True
+
+    def run_test(self):
+        now=int(time.time())
+        clock_skew_offset=3600
+        minimum_days_left = 5
+
+        problem = False
+
+        all_inceptions=[]
+        all_expirations=[]
+
+        for rdtype,val in self.broker.domaininfo.iteritems():
+            if 'RRSIG' not in val:
+                continue
+
+            for rrsig in val['RRSIG']:
+                inception = rrsig['inception']
+                all_inceptions.append(inception)
+                if inception>now:
+                    problem = True
+                    self.result_messages.append("RRSIG for %s key tag %s is not yet valid"%(rdtype,rrsig['key_tag'])) #
+
+                if abs(inception-now)<clock_skew_offset:
+                    problem = True
+                    self.result_messages.append(
+                        "RRSIG for %s key tag %s is dangerously close to now - clock skew on resolvers will cause validation failure" % (rdtype, rrsig['key_tag']))  #
+
+                expiration = rrsig['expiration']
+                all_expirations.append(expiration)
+                if expiration<now:
+                    problem = True
+                    self.result_messages.append(
+                        "RRSIG for %s key tag %s has expired!" % (rdtype, rrsig['key_tag']))  #
+
+        days_until_expiration = max(0,int((min(all_expirations)-now) / (24*3600)))
+        self.result_messages.append(
+            "RRSIG will expire in %s days" % (days_until_expiration) ) #
+
+        if days_until_expiration < minimum_days_left:
+            problem = True
+            self.result_messages.append(
+            "RRSIG are dangerously close to expiration, resign the zone!" )
+
+
+        if problem:
+            self.result_type = RESULTTYPE_BAD
+        else:
+            self.result_type = RESULTTYPE_GOOD
 
 
 
-all_tests=[AreWeSigned, HaveDS, DSDigestAlgo,
+
+all_tests=[AreWeSigned, HaveDS, DSDigestAlgo,RRSIGTimes,
 
     DummyInfo, DummyGood, DummyBad,
             ]
