@@ -80,7 +80,7 @@ def all_the_shiet(domain, dns_server = "8.8.8.8", output = False):
         for rdata in soa_answers[0]:
             response['SOA']['RR'].append({
                 "expire" : rdata.expire,
-                "ttl" : dnskey_answers[0].ttl
+                "ttl" : soa_answers[0].ttl
             })
             if output:
                 print "  Expire: ", rdata.expire
@@ -93,8 +93,8 @@ def all_the_shiet(domain, dns_server = "8.8.8.8", output = False):
                 "algorithm" : rdata.algorithm,
                 "inception" : rdata.inception,
                 "key_gat" : rdata.key_tag,
-                "expiration" : rdata.expiration,
-                "ttl" : dnskey_answers[1].ttl
+                "expiration" : rdata.expirastion,
+                "ttl" : soa_answers[1].ttl
             })
             if output:
                 print "  Algorithm: ", rdata.algorithm
@@ -114,7 +114,7 @@ def all_the_shiet(domain, dns_server = "8.8.8.8", output = False):
                 "algorithm" : rdata.algorithm,
                 "digest_type" : rdata.digest_type,
                 "key_tag" : rdata.key_tag,
-                "ttl" : dnskey_answers[0].ttl
+                "ttl" : ds_answers[0].ttl
             })
             if output:
                 print "  Algorithm: ", rdata.algorithm
@@ -130,7 +130,7 @@ def all_the_shiet(domain, dns_server = "8.8.8.8", output = False):
                 "inception" : rdata.inception,
                 "key_gat" : rdata.key_tag,
                 "expiration" : rdata.expiration,
-                "ttl" : dnskey_answers[1].ttl
+                "ttl" : ds_answers[1].ttl
             })
             if output:
                 print "  Algorithm: ", rdata.algorithm
