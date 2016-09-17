@@ -326,6 +326,7 @@ class RRSIGForEachDSAlgorithm(TestBase):
         diff = ds_algorithms - rrsig_algorithms
         if len(diff) >= 1:
             self.result_type = RESULTTYPE_BAD
+            self.result_messages.append("An RRSIG in DNSKEY is missing for %d algorithms!", len(diff))
         else:
             self.result_type = RESULTTYPE_GOOD
 
