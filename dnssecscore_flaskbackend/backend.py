@@ -1,6 +1,6 @@
 from flask import Flask, jsonify
 app = Flask(__name__)
-from dnssecchecks import all_tests, DNSInfoBroker, TESTRESULTTYPE_ERROR, TESTRESULTTYPE_SECURE, RESULTTYPE_BAD
+from dnssecchecks import all_tests, DNSInfoBroker, TESTRESULTTYPE_ERROR, TESTRESULTTYPE_SECURE, RESULTTYPE_BAD, RESULTTYPE_WARNING
 import time
 
 @app.route("/testdomain")
@@ -29,6 +29,7 @@ class DNSSECTest(object):
         for testclass in all_tests:
             testinstance = testclass(self.broker)
             if not testinstance.do_we_have_what_we_need():
+                print "Test %s skipped - missing info"%testinstance.name
                 continue
 
             self.testresults.append(testinstance)
@@ -38,8 +39,6 @@ class DNSSECTest(object):
             if testinstance.shortcircuit!=None:
                 self.result_type = testinstance.shortcircuit
                 break
-
-
 
 
     def result_as_dict(self):
@@ -54,7 +53,7 @@ class DNSSECTest(object):
         score_subtract_per_test = 100.0/(len(all_tests))
 
         for result in self.testresults:
-            if result.result_type == RESULTTYPE_BAD:
+            if result.result_type in ( RESULTTYPE_BAD, RESULTTYPE_WARNING):
                 score -= (score_subtract_per_test * result.result_weight )
             resultinfo = {
                 "name": result.name,
@@ -67,13 +66,10 @@ class DNSSECTest(object):
         if self.result_type == None:
             self.result_type = TESTRESULTTYPE_SECURE
 
-
         resultdict["result"] = self.result_type
         resultdict["score"] = int(score)
 
         return resultdict
-
-
 
 
 
