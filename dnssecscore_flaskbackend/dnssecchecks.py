@@ -33,13 +33,13 @@ class DNSInfoBroker(object):
 
 class TestBase(object):
     def __init__(self,broker):
-        self.name="test name"
+        self.name="dummy test name"
         self.description="test description"
         self.broker = broker
-        self.resulttype = RESULTTYPE_UNKNOWN
 
         self.shortcircuit = None # set a TESTRESULTTYPE_... to abort all tests
 
+        self.result_type = RESULTTYPE_UNKNOWN
         self.result_weight = 1 # how important is this test. 0 for "informative only"
         self.result_messages = []
 
@@ -54,37 +54,51 @@ class TestBase(object):
 
 
 class DummyInfo(TestBase):
+    def __init__(self, broker):
+        TestBase.__init__(self, broker)
+        self.name = "Important information"
+        self.description = "This block well tell you something really informative"
+
     def do_we_have_what_we_need(self):
         return True
 
     def run_test(self):
-        self.resulttype = RESULTTYPE_NEUTRAL
+
+        self.result_type = RESULTTYPE_NEUTRAL
         self.result_weight  = 0
         self.result_messages = ["This is just a dummy info message to see if things are working. ", ]
 
 
 class DummyGood(TestBase):
+    def __init__(self, broker):
+        TestBase.__init__(self, broker)
+        self.name = "Successful test dummy"
+        self.description = "This test always succeeds - how nice!"
+
     def do_we_have_what_we_need(self):
         return True
 
     def run_test(self):
-        self.resulttype = RESULTTYPE_GOOD
+        self.result_type = RESULTTYPE_GOOD
         self.result_weight  = 1
         self.result_messages = ["This is just a dummy success result. That mean's you've passed... YAY!", ]
 
 class DummyBad(TestBase):
+    def __init__(self, broker):
+        TestBase.__init__(self, broker)
+        self.name = "Failed test dummy"
+        self.description = "This test always fails - and there is NOTHING you can do about it..muahahaha"
+
     def do_we_have_what_we_need(self):
         return True
 
     def run_test(self):
-        self.resulttype = RESULTTYPE_BAAD
+        self.result_type = RESULTTYPE_BAD
         self.result_weight  = 1
         self.result_messages = ["This is just a dummy fail result. Sorry to say you've failed this one... BOOOH!", ]
 
 
-class CheckAreWeSigned(TestBase):
-    def __init__(self, broker):
-        super(TestBase, self).__init__(broker)
+
 
 
 

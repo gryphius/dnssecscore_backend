@@ -31,14 +31,15 @@ class DNSSECTest(object):
             if not testinstance.do_we_have_what_we_need():
                 continue
 
-                testinstance.run_test()
+            self.testresults.append(testinstance)
+            testinstance.run_test()
 
             # abort tests
             if testinstance.shortcircuit!=None:
                 self.result_type = testinstance.shortcircuit
                 break
 
-            self.testresults.append(testinstance)
+
 
 
     def result_as_dict(self):
@@ -53,17 +54,22 @@ class DNSSECTest(object):
         score_subtract_per_test = 100.0/(len(all_tests))
 
         for result in self.testresults:
-            if result.resulttype == RESULTTYPE_BAD:
-                score -= (score_subtract_per_test * result_weight )
-            pass
+            if result.result_type == RESULTTYPE_BAD:
+                score -= (score_subtract_per_test * result.result_weight )
+            resultinfo = {
+                "name": result.name,
+                "description": result.description,
+                "messages": result.result_messages
+            }
+            resultdict["tests"].append(resultinfo)
 
         if self.result_type == None:
             self.result_type = TESTRESULTTYPE_SECURE
 
 
         resultdict["result"] = self.result_type
-
-
+        resultdict["score"] = int(score)
+        
         return resultdict
 
 
@@ -71,4 +77,5 @@ class DNSSECTest(object):
 
 
 if __name__ == "__main__":
+    app.debug = True
     app.run()
