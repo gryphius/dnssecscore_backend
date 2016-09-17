@@ -59,7 +59,8 @@ class DNSSECTest(object):
             resultinfo = {
                 "name": result.name,
                 "description": result.description,
-                "messages": result.result_messages
+                "messages": result.result_messages,
+                "result_type": result.result_type,
             }
             resultdict["tests"].append(resultinfo)
 
