@@ -59,7 +59,7 @@ class DNSInfoBroker(object):
         return self.domaininfo[rtype.upper()]['RR']
 
     def get_rrsigs(self, rtype):
-        return self.domaininfo[rtype.upper()]['RRSIGS']
+        return self.domaininfo[rtype.upper()]['RRSIG']
 
 
     def load_single_record(self, rtype):
@@ -317,11 +317,11 @@ class RRSIGForEachDSAlgorithm(TestBase):
     def run_test(self):
         ds_algorithms = set()
         for record in self.broker.get_records('DS'):
-            ds_algorithms.add(record.algorithm)
+            ds_algorithms.add(record['algorithm'])
 
         rrsig_algorithms = set()
         for record in self.broker.get_rrsigs('DNSKEY'):
-            rrsig_algorithms.add(record.algorithm)
+            rrsig_algorithms.add(record['algorithm'])
 
         diff = ds_algorithms - rrsig_algorithms
         if len(diff) >= 1:
