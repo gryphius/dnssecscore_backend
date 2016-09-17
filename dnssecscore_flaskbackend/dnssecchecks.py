@@ -18,6 +18,13 @@ TESTRESULTTYPE_VALIDATIONFAILURE = "F"
 TESTRESULTTYPE_SECURE = "S"
 TESTRESULTTYPE_ERROR = "E"
 
+ADS_BACKEND_AVAILABLE=False # check if our cool dnslookup to dict function is ready
+USE_ADS_BACKEND_IF_POSSIBLE = True
+try:
+    from dnssecscore_flaskbackend.all_the_shiet import all_the_shiet as do_all_lookups
+    ADS_BACKEND_AVAILABLE = True
+except:
+    pass
 
 class DNSInfoBroker(object):
     def __init__(self, domain):
@@ -27,10 +34,14 @@ class DNSInfoBroker(object):
         self._load_info()
 
     def _load_info(self):
-        self.load_single_record('DS')
-        self.load_single_record('DNSKEY')
-        self.load_single_record('SOA')
 
+
+        if ADS_BACKEND_AVAILABLE and USE_ADS_BACKEND_IF_POSSIBLE:
+            self.domaininfo = do_all_lookups(self.domain)
+        else:
+            self.load_single_record('DS')
+            self.load_single_record('DNSKEY')
+            self.load_single_record('SOA')
         print pprint.pformat(self.domaininfo)
 
 
@@ -76,8 +87,6 @@ class TestBase(object):
         self.result_type = RESULTTYPE_UNKNOWN
         self.result_weight = 1 # how important is this test. 0 for "informative only"
         self.result_messages = []
-
-
 
     def do_we_have_what_we_need(self):
         #ask the broker if the records have been completed
