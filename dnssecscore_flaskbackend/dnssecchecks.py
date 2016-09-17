@@ -371,7 +371,7 @@ class NumberOfDNSKEYs(TestBase):
 
     def run_test(self):
         dnskeys = self.broker.get_records("DNSKEY")
-        ksks = [k for k in dnskeys if k['flags']&1 == 1]
+        ksks = [k for k in dnskeys if k['flags'] & 1 == 1]
         zsks = [k for k in dnskeys if k['flags'] & 1 == 0]
 
         self.result_messages.append("found %s DNSKEYS (%s KSK / %s ZSK)"%(len(dnskeys),len(ksks),len(zsks)))
@@ -381,8 +381,42 @@ class NumberOfDNSKEYs(TestBase):
         else:
             self.result_type = RESULTTYPE_GOOD
 
+class NSEC3PARAMOptOut(TestBase):
+    def __init__(self, broker):
+        TestBase.__init__(self, broker)
+        self.name = "Check if the opt out bit is set in NSEC3PARAM."
+        self.description = "This test will test if the NSEC3PARAM opt out bit is set -- it shouldn't be."
+
+
+    def do_we_have_what_we_need(self):
+        if not self.broker.have_completed("NSEC3PARAM"):
+            return False
+        return True
+
+    def run_test(self):
+        if self.broker.is_nxdomain():
+            self.result_type = RESULTTYPE_NEUTRAL
+            self.result_messages.append("NSEC3PARAM not in use.")
+            return
+
+        nsec3param = self.broker.get_records("NSEC3PARAM")
+
+        if nsec3param[0].flags & 1:
+            self.result_type = RESULTTYPE_BAD
+            self.result_messages.append("NSEC3PARAM op out is enabled, but shouldn't be.")
+            return
+
+        if nsec3param[0].flags != 0:
+            self.result_type = RESULTTYPE_BAD
+            self.result_messages.append("NSEC3PARAM unused flags are set, but shouldn't be.")
+            return
+
+        self.result_type = RESULTTYPE_GOOD
+
+
+
 all_tests=[AreWeSigned, HaveDS, DSDigestAlgo, RRSIGTimes,
-RRSIGForEachDSAlgorithm, DanglingDS, NumberOfDNSKEYs,
+RRSIGForEachDSAlgorithm, DanglingDS, NumberOfDNSKEYs, NSEC3PARAMOptOut
 ]
 
 # Dummies we can use for testing DummyInfo, DummyGood, DummyBad,]
