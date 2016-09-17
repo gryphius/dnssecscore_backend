@@ -403,7 +403,7 @@ class NSEC3PARAMOptOut(TestBase):
 
         if nsec3param[0].flags & 1:
             self.result_type = RESULTTYPE_BAD
-            self.result_messages.append("NSEC3PARAM op out is enabled, but shouldn't be.")
+            self.result_messages.append("NSEC3PARAM opt out is enabled, but shouldn't be.")
             return
 
         if nsec3param[0].flags != 0:
