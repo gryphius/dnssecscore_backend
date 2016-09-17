@@ -39,7 +39,7 @@ def dnskey_shiet(domain, dns_server = "8.8.8.8", output = False):
             response['RRSIG'].append({
                 "algorithm" : rdata.algorithm,
                 "inception" : rdata.inception,
-                "key_gat" : rdata.key_tag,
+                "key_tag" : rdata.key_tag,
                 "expiration" : rdata.expiration,
                 "ttl" : dnskey_answers[1].ttl
             })
@@ -79,7 +79,7 @@ def soa_shiet(domain, dns_server = "8.8.8.8", output = False):
             response['RRSIG'].append({
                 "algorithm" : rdata.algorithm,
                 "inception" : rdata.inception,
-                "key_gat" : rdata.key_tag,
+                "key_tag" : rdata.key_tag,
                 "expiration" : rdata.expiration,
                 "ttl" : soa_answers[1].ttl
             })
@@ -123,7 +123,7 @@ def ds_shiet(domain, dns_server = "8.8.8.8", output = False):
             response['RRSIG'].append({
                 "algorithm" : rdata.algorithm,
                 "inception" : rdata.inception,
-                "key_gat" : rdata.key_tag,
+                "key_tag" : rdata.key_tag,
                 "expiration" : rdata.expiration,
                 "ttl" : ds_answers[1].ttl
             })
