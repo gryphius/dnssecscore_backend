@@ -169,6 +169,7 @@ def nsec3param_shiet(domain, dns_server = "8.8.8.8", output = False):
             response['RR'].append({
                 "algorithm" : rdata.algorithm,
                 "iterations" : rdata.iterations,
+                "flags" : rdata.flags,
                 "salt" : rdata.salt,
                 "ttl" : nsec3param_answers[0].ttl
             })
@@ -176,6 +177,7 @@ def nsec3param_shiet(domain, dns_server = "8.8.8.8", output = False):
                 print dir(rdata)
                 print "  Algorithm: ", rdata.algorithm
                 print "  Iterations: ", rdata.iterations
+                print "  Flags: ", rdata.flags
                 print "  Salt: ", rdata.salt
                 print "  TTL: ", nsec3param_answers[0].ttl
                 print "----------------------------"
