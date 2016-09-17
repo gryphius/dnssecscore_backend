@@ -169,7 +169,6 @@ class AreWeSigned(TestBase):
         self.result_type = RESULTTYPE_GOOD
 
         dnskeys = self.broker.get_records('DNSKEY')
-        self.result_messages.append("found %s DNSKEYS (x ZSK/y KSK)"%len(dnskeys))
 
 
 class HaveDS(TestBase):
@@ -371,6 +370,11 @@ class NumberOfDNSKEYs(TestBase):
         return True
 
     def run_test(self):
+        dnskeys = self.broker.get_records("DNSKEY")
+        ksks = [k for k in dnskeys if k['flags']&1 == 1]
+        zsks = [k for k in dnskeys if k['flags'] & 1 == 0]
+
+        self.result_messages.append("found %s DNSKEYS (%s KSK / %s ZSK)"%(len(dnskeys),len(ksks),len(zsks)))
         if len(self.broker.get_records("DNSKEY")) > 3:
             self.result_type = RESULTTYPE_BAD
             self.result_messages.append("Too many DNSKEYs present. Not more than three are needed (zone signing key, key signing key and a rollover key).")
