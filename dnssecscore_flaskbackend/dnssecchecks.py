@@ -381,6 +381,36 @@ class NumberOfDNSKEYs(TestBase):
         else:
             self.result_type = RESULTTYPE_GOOD
 
+class NSEC3HashAlgo(TestBase):
+    def __init__(self, broker):
+        TestBase.__init__(self, broker)
+        self.name = "Test the NSEC3 hash algorithm"
+        self.description = "If the zone is using nsec3, check the hash algorithm"
+
+
+    def do_we_have_what_we_need(self):
+        if not self.broker.have_completed("NSEC3PARAM"):
+            return False
+        return True
+
+
+    def run_test(self):
+        self.result_type = RESULTTYPE_GOOD
+        if self.broker.is_nxdomain('NSEC3PARAM'):
+            self.result_messages.append("NSEC3 not in use")
+            return
+
+        for nsecp in self.broker.get_records('NSEC3PARAM'):
+            alg=nsecp["algorithm"]
+            if alg!=1:
+                self.result_type= RESULTTYPE_BAD
+                self.result_messages.append("NSEC3 hash algorithm is %s instead of 1"%alg)
+                return
+
+
+
+
+
 all_tests=[AreWeSigned, HaveDS, DSDigestAlgo, RRSIGTimes,
 RRSIGForEachDSAlgorithm, DanglingDS, NumberOfDNSKEYs,
 ]
