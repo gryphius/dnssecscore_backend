@@ -455,17 +455,17 @@ class NSEC3PARAMOptOut(TestBase):
             self.result_messages.append("NSEC3 is not in use.")
             return
 
-        nsec3param = self.broker.get_records("NSEC3PARAM")
+        nsec3params = self.broker.get_records("NSEC3PARAM")
+        for nsecparam in nsec3params:
+            if nsecparam['flags'] & 1:
+                self.result_type = RESULTTYPE_BAD
+                self.result_messages.append("NSEC3PARAM opt-out is set")
+                return
 
-        if nsec3param[0].flags & 1:
-            self.result_type = RESULTTYPE_BAD
-            self.result_messages.append("NSEC3PARAM opt out is enabled, but shouldn't be.")
-            return
-
-        if nsec3param[0].flags != 0:
-            self.result_type = RESULTTYPE_BAD
-            self.result_messages.append("NSEC3PARAM unused flags are set, but shouldn't be.")
-            return
+            if nsecparam['flags'] != 0:
+                self.result_type = RESULTTYPE_BAD
+                self.result_messages.append("NSEC3PARAM unused flags are set")
+                return
 
         self.result_type = RESULTTYPE_GOOD
 
