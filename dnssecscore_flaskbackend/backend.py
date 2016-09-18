@@ -23,14 +23,14 @@ def checkdomain(domainname):
             "domain": domainname,
             "total_tests": len(all_tests),
             "tests":[],
-            "result": "E",
+            "result": TESTRESULTTYPE_ERROR,
             "score":0,
             "tests":[
                 {
                     'name': "Oops",
                     'description': "something went wrong",
                     'messages': ['we are having trouble performing the tests. this is probably a bug on our side',],
-                    'result_type': TESTRESULTTYPE_ERROR,
+                    'result_type': RESULTTYPE_BAD,
                 }
             ],
         }
@@ -56,7 +56,14 @@ class DNSSECTest(object):
                 continue
 
             self.testresults.append(testinstance)
-            testinstance.run_test()
+            try:
+                testinstance.run_test()
+            except:
+                print traceback.format_exc()
+                testinstance.result_type = RESULTTYPE_BAD
+                self.result_type = TESTRESULTTYPE_ERROR
+                testinstance.result_messages= ['something went wrong while running this test and we had to abort... sorry!']
+                break
 
             # abort tests
             if testinstance.shortcircuit!=None:
