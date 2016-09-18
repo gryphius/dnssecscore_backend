@@ -357,7 +357,7 @@ class DanglingDS(TestBase):
         diff = ds_key_tags - dnskey_key_tags
         if len(diff) >= 1:
             self.result_type = RESULTTYPE_NEUTRAL
-            self.result_messages.append("Dangling DS record(s) for missing key tag(s) %s", diff)
+            self.result_messages.append("Dangling DS record(s) for missing key tag(s) %s"% " ".join([str(tag) for tag in diff]))
         else:
             self.result_type = RESULTTYPE_GOOD
 
