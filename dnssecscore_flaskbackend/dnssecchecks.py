@@ -1,6 +1,7 @@
 import dns.resolver
 import pprint
 import time
+from dns.dnssec import algorithm_to_text
 
 from dns.resolver import NoAnswer
 
@@ -378,11 +379,39 @@ class NumberOfDNSKEYs(TestBase):
         zsks = [k for k in dnskeys if k['flags'] & 1 == 0]
 
         self.result_messages.append("found %s DNSKEYS (%s KSK / %s ZSK)"%(len(dnskeys),len(ksks),len(zsks)))
-        if len(self.broker.get_records("DNSKEY")) > 3:
+        if len(dnskeys) > 3:
             self.result_type = RESULTTYPE_BAD
             self.result_messages.append("Too many DNSKEYs present. Not more than three are needed (zone signing key, key signing key and a rollover key).")
         else:
             self.result_type = RESULTTYPE_GOOD
+
+class KeyType(TestBase):
+    def __init__(self, broker):
+        TestBase.__init__(self, broker)
+        self.expected_keyalgo = 13
+        self.expected_keyalgo_text = "ECDSAP256SHA256" # doesnt work, bug in dnspython? algorithm_to_text(self.expected_keyalgo)
+        self.name = "Key Type"
+        self.description = "The current best practice is to use %s keys."% self.expected_keyalgo_text
+
+
+    def do_we_have_what_we_need(self):
+        if not self.broker.have_completed("DNSKEY"):
+            return False
+        return True
+
+    def run_test(self):
+        dnskeys = self.broker.get_records("DNSKEY")
+        self.result_type = RESULTTYPE_GOOD
+        for key in dnskeys:
+            tag = key.get('key_tag')
+            algo = key['algorithm']
+            algo_text = algorithm_to_text(algo)
+            if algo_text!=str(algo):
+                algo_text="%s(%s)"%(algo_text,algo)
+            if  algo!= self.expected_keyalgo:
+                self.result_type = RESULTTYPE_BAD
+                self.result_messages.append("Your key tag %s is using algorithm %s instead of %s(%s)"%(tag, algo_text,self.expected_keyalgo_text,self.expected_keyalgo))
+
 
 class NSEC3HashAlgo(TestBase):
     def __init__(self, broker):
@@ -445,7 +474,7 @@ class NSEC3PARAMOptOut(TestBase):
 
 
 all_tests=[AreWeSigned, HaveDS, DSDigestAlgo, RRSIGTimes,
-RRSIGForEachDSAlgorithm, DanglingDS, NumberOfDNSKEYs, NSEC3HashAlgo, NSEC3PARAMOptOut
+RRSIGForEachDSAlgorithm, DanglingDS, NumberOfDNSKEYs, KeyType, NSEC3HashAlgo, NSEC3PARAMOptOut
 ]
 
 # Dummies we can use for testing DummyInfo, DummyGood, DummyBad,]
