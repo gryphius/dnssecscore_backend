@@ -402,15 +402,32 @@ class KeyType(TestBase):
     def run_test(self):
         dnskeys = self.broker.get_records("DNSKEY")
         self.result_type = RESULTTYPE_GOOD
+
+        badalgos={}
+
         for key in dnskeys:
             tag = key.get('key_tag')
             algo = key['algorithm']
+            if algo!=self.expected_keyalgo:
+                if algo not in badalgos:
+                    badalgos[algo]=[]
+                badalgos[algo].append(tag)
+
+        for algo,keytags in badalgos.iteritems():
+
             algo_text = algorithm_to_text(algo)
             if algo_text!=str(algo):
                 algo_text="%s(%s)"%(algo_text,algo)
-            if  algo!= self.expected_keyalgo:
-                self.result_type = RESULTTYPE_BAD
-                self.result_messages.append("Your key tag %s is using algorithm %s instead of %s(%s)"%(tag, algo_text,self.expected_keyalgo_text,self.expected_keyalgo))
+
+            self.result_type = RESULTTYPE_BAD
+            self.result_messages.append("key tag %s using algorithm %s "%(" ".join(str(x) for x in keytags), algo_text))
+
+        if self.result_type == RESULTTYPE_GOOD:
+            self.result_messages.append("all keys are using "+self.expected_keyalgo_text)
+        else:
+            self.result_messages.append("we recommend upgrading to %s(%s)" %( self.expected_keyalgo_text,self.expected_keyalgo))
+
+
 
 
 class NSEC3HashAlgo(TestBase):
