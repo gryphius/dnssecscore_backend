@@ -3,6 +3,7 @@ app = Flask(__name__)
 from dnssecchecks import all_tests, DNSInfoBroker, TESTRESULTTYPE_ERROR, TESTRESULTTYPE_SECURE, RESULTTYPE_BAD, RESULTTYPE_WARNING
 import time
 import pprint
+import traceback
 
 @app.route("/testdomain")
 def testdomain():
@@ -11,10 +12,31 @@ def testdomain():
 
 @app.route('/d/<domainname>')
 def checkdomain(domainname):
-    testrun = DNSSECTest(domainname)
-    testrun.run_tests()
+    try:
+        testrun = DNSSECTest(domainname)
+        testrun.run_tests()
+        return jsonify(testrun.result_as_dict())
+    except Exception:
+        print traceback.format_exc()
+        errdic= {
+            "startdate": int(time.time()),
+            "domain": domainname,
+            "total_tests": len(all_tests),
+            "tests":[],
+            "result": "E",
+            "score":0,
+            "tests":[
+                {
+                    'name': "Oops",
+                    'description': "something went wrong",
+                    'messages': ['we are having trouble performing the tests. this is probably a bug on our side',],
+                    'result_type': TESTRESULTTYPE_ERROR,
+                }
+            ],
+        }
 
-    return jsonify(testrun.result_as_dict())
+        return jsonify(errdic)
+
 
 
 
