@@ -452,7 +452,7 @@ class NSEC3PARAMOptOut(TestBase):
     def run_test(self):
         if self.broker.is_nxdomain('NSEC3PARAM'):
             self.result_type = RESULTTYPE_GOOD
-            self.result_messages.append("NSEC3PARAM not in use.")
+            self.result_messages.append("NSEC3 is not in use.")
             return
 
         nsec3param = self.broker.get_records("NSEC3PARAM")
