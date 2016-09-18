@@ -336,8 +336,8 @@ class RRSIGForEachDSAlgorithm(TestBase):
 class DanglingDS(TestBase):
     def __init__(self, broker):
         TestBase.__init__(self, broker)
-        self.name = "Check if there are the same key tags in DS and DNSKEY."
-        self.description = "This test will test if the same key tags exist in both DS record an the DNSKEYs."
+        self.name = "Dangling DS"
+        self.description = "Check for DS records without matching DNSKEY"
 
 
     def do_we_have_what_we_need(self):
@@ -357,7 +357,7 @@ class DanglingDS(TestBase):
         diff = ds_key_tags - dnskey_key_tags
         if len(diff) >= 1:
             self.result_type = RESULTTYPE_NEUTRAL
-            self.result_messages.append("There exists a dangling key tag %s in the DS record.", diff)
+            self.result_messages.append("Dangling DS record(s) for missing key tag(s) %s", diff)
         else:
             self.result_type = RESULTTYPE_GOOD
 
@@ -390,7 +390,7 @@ class KeyType(TestBase):
         TestBase.__init__(self, broker)
         self.expected_keyalgo = 13
         self.expected_keyalgo_text = "ECDSAP256SHA256" # doesnt work, bug in dnspython? algorithm_to_text(self.expected_keyalgo)
-        self.name = "Key Type"
+        self.name = "Key strength"
         self.description = "The current best practice is to use %s keys."% self.expected_keyalgo_text
 
 
