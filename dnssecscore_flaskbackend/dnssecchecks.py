@@ -153,8 +153,8 @@ class DummyBad(TestBase):
 class AreWeSigned(TestBase):
     def __init__(self, broker):
         TestBase.__init__(self, broker)
-        self.name = "Is the domain protected with DNSSEC"
-        self.description = "Basic test to see if the domain publishes DNSKEY records"
+        self.name = "DNSSEC enabled"
+        self.description = "look for DNSKEY records in the domain"
 
     def do_we_have_what_we_need(self):
         if not self.broker.have_completed('DNSKEY'):
@@ -175,8 +175,8 @@ class AreWeSigned(TestBase):
 class HaveDS(TestBase):
     def __init__(self, broker):
         TestBase.__init__(self, broker)
-        self.name = "Check DS records"
-        self.description = "Check if we can validate this domain starting from the root or if this an island of security. "
+        self.name = "Secure delegation"
+        self.description = "Fetch DS records from the parent domain"
 
     def do_we_have_what_we_need(self):
         if not self.broker.have_completed('DS'):
@@ -204,8 +204,8 @@ class HaveDS(TestBase):
 class DSDigestAlgo(TestBase):
     def __init__(self, broker):
         TestBase.__init__(self, broker)
-        self.name = "Check DS records algorithm"
-        self.description = "This test checks the DS hash algorithms used. SHA1 is discouraged, SHA2 must be available, optionally 3 and 4"
+        self.name = "DS record hash algorithm"
+        self.description = "Test the DS for missing or outdated hash algorithms"
 
     def do_we_have_what_we_need(self):
         if not self.broker.have_completed('DS'):
@@ -245,8 +245,8 @@ class DSDigestAlgo(TestBase):
 class RRSIGTimes(TestBase):
     def __init__(self, broker):
         TestBase.__init__(self, broker)
-        self.name = "Check RRSIG inception and expiration times"
-        self.description = "This test will test if your RRSIGs are close to expiration or the inception could be affected by clock skew"
+        self.name = "Signature validity timing"
+        self.description = "Test if the RRSIGs are expired (or close to expiration) or the validation could break due to clock skew"
 
 
     def do_we_have_what_we_need(self):
@@ -308,8 +308,8 @@ class RRSIGTimes(TestBase):
 class RRSIGForEachDSAlgorithm(TestBase):
     def __init__(self, broker):
         TestBase.__init__(self, broker)
-        self.name = "Check if there is an RRSIG in DNSKEY for each algorithm in DS."
-        self.description = "This test will test if there exists an RRSIG in DNSKEY for every algorithm that is used in DS."
+        self.name = "RFC compliance: DNSKEY RRSIG"
+        self.description = "Is there an RRSIG in DNSKEY for every algorithm that is used in DS."
 
 
     def do_we_have_what_we_need(self):
@@ -364,8 +364,8 @@ class DanglingDS(TestBase):
 class NumberOfDNSKEYs(TestBase):
     def __init__(self, broker):
         TestBase.__init__(self, broker)
-        self.name = "Check if there are too many DNSKEYs."
-        self.description = "This test will test if the domain has more than three DNSKEYs (three is plenty)."
+        self.name = "DNSKEYs RRSET size"
+        self.description = "More than three DNSKEYs (1xKSK, 1xZSK, 1xRollover Key) are usually not needed. Additional keys increase the amplification factor in DOS attacks"
 
 
     def do_we_have_what_we_need(self):
@@ -416,8 +416,8 @@ class KeyType(TestBase):
 class NSEC3HashAlgo(TestBase):
     def __init__(self, broker):
         TestBase.__init__(self, broker)
-        self.name = "Test the NSEC3 hash algorithm"
-        self.description = "If the zone is using nsec3, check the hash algorithm"
+        self.name = "NSEC3 hash algorithm"
+        self.description = "Only hash algorithm 1 is currently allowed in NSEC3"
 
 
     def do_we_have_what_we_need(self):
@@ -441,8 +441,8 @@ class NSEC3HashAlgo(TestBase):
 class NSEC3PARAMOptOut(TestBase):
     def __init__(self, broker):
         TestBase.__init__(self, broker)
-        self.name = "Check if the opt out bit is set in NSEC3PARAM."
-        self.description = "This test will test if the NSEC3PARAM opt out bit is set -- it shouldn't be."
+        self.name = "NSEC3 Opt-out"
+        self.description = "NSEC3 Opt-out should only be used in large domains with many delegations (TLDs etc)"
 
     def do_we_have_what_we_need(self):
         if not self.broker.have_completed("NSEC3PARAM"):
