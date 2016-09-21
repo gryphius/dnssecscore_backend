@@ -8,7 +8,7 @@ from dnsdict import dnsdict
 
 @app.route('/dnsdict/<domainname>')
 def dndsict(domainname):
-    dic = dnsdict(domainname)
+    dic = dnsdict(domainname, timeout=6)
     pretty=pprint.pformat(dic)
     tmpl="<PRE>%s</PRE>"%pretty
     return tmpl
