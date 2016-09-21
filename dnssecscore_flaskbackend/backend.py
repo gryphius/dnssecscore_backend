@@ -4,10 +4,14 @@ from dnssecchecks import all_tests, DNSInfoBroker, TESTRESULTTYPE_ERROR, TESTRES
 import time
 import pprint
 import traceback
+from dnsdict import dnsdict
 
-@app.route("/testdomain")
-def testdomain():
-    return "Hello World!"
+@app.route('/dnsdict/<domainname>')
+def dndsict(domainname):
+    dic = dnsdict(domainname)
+    pretty=pprint.pformat(dic)
+    tmpl="<PRE>%s</PRE>"%pretty
+    return tmpl
 
 
 @app.route('/d/<domainname>')

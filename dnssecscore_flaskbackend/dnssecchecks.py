@@ -20,14 +20,9 @@ TESTRESULTTYPE_VALIDATIONFAILURE = "F"
 TESTRESULTTYPE_SECURE = "S"
 TESTRESULTTYPE_ERROR = "E"
 
-ADS_BACKEND_AVAILABLE=False # check if our cool dnslookup to dict function is ready
-USE_ADS_BACKEND_IF_POSSIBLE = True
-try:
-    from all_the_shiet import all_the_shiet as do_all_lookups
-    ADS_BACKEND_AVAILABLE = True
-except Exception,e:
-    print "Could not load ads backend: %s"%str(e)
-    pass
+DNSDICT_AVAILABLE =False # check if our cool dnslookup to dict function is ready
+from dnsdict import dnsdict
+
 
 class DNSInfoBroker(object):
     def __init__(self, domain):
@@ -37,52 +32,30 @@ class DNSInfoBroker(object):
         self._load_info()
 
     def _load_info(self):
-
-
-        if ADS_BACKEND_AVAILABLE and USE_ADS_BACKEND_IF_POSSIBLE:
-            print "Running DNS lookup using ADS Backend"
-            self.domaininfo = do_all_lookups(self.domain)
-        else:
-            print "Running DNS lookup using our own dummy"
-            self.load_single_record('DS')
-            self.load_single_record('DNSKEY')
-            self.load_single_record('SOA')
+        self.domaininfo = dnsdict(self.domain)
         print pprint.pformat(self.domaininfo)
 
 
     def have_completed(self, rtype):
-        return rtype.upper() in self.domaininfo
+        return True
 
     def is_nxdomain(self, rtype): #or empty
-        return self.domaininfo[rtype.upper()] in ( None, {} )
+        rtype = rtype.upper()
+        if  self.domaininfo['LOCAL_DNSSEC'][rtype]['_META']['i_rcode'] == 3:
+            return True
+        if  rtype not in self.domaininfo['LOCAL_DNSSEC'][rtype]: # no answer for this query
+            return True
+
+        return False
 
     def get_records(self, rtype):
-        return self.domaininfo[rtype.upper()]['RR']
+        rtype = rtype.upper()
+        return self.domaininfo['LOCAL_DNSSEC'][rtype][rtype]
 
     def get_rrsigs(self, rtype):
-        return self.domaininfo[rtype.upper()]['RRSIG']
-
-
-    def load_single_record(self, rtype):
         rtype = rtype.upper()
+        return self.domaininfo['LOCAL_DNSSEC'][rtype]['RRSIG']
 
-        try:
-            answers = dns.resolver.query(self.domain, rtype)
-        except NoAnswer:
-            self.domaininfo[rtype]=NXDOMAIN
-            return
-
-        newinfo = []
-
-        for rdata in answers:
-            d = dict()
-            d['text'] = rdata.to_text()
-            newinfo.append(d)
-
-            if rtype=='DNSKEY':
-                d['flags']=rdata.flags
-
-        self.domaininfo[rtype]= {'RR' : newinfo }
 
 
 class TestBase(object):
@@ -265,10 +238,9 @@ class RRSIGTimes(TestBase):
         all_inceptions=[]
         all_expirations=[]
 
-        for rdtype,val in self.broker.domaininfo.iteritems():
+        for rdtype,val in self.broker.domaininfo['LOCAL_DNSSEC'].iteritems():
             if 'RRSIG' not in val:
                 continue
-
             for rrsig in val['RRSIG']:
                 inception = rrsig['inception']
                 all_inceptions.append(inception)
@@ -352,7 +324,7 @@ class DanglingDS(TestBase):
 
         dnskey_key_tags = set()
         for record in self.broker.get_records("DNSKEY"):
-            dnskey_key_tags.add(record["key_tag"])
+            dnskey_key_tags.add(record["i_key_tag"])
 
         diff = ds_key_tags - dnskey_key_tags
         if len(diff) >= 1:
@@ -438,17 +410,17 @@ class NSEC3HashAlgo(TestBase):
 
 
     def do_we_have_what_we_need(self):
-        if not self.broker.have_completed("NSEC3PARAM"):
+        if not self.broker.have_completed("NSEC3"):
             return False
         return True
 
     def run_test(self):
         self.result_type = RESULTTYPE_GOOD
-        if self.broker.is_nxdomain('NSEC3PARAM'):
+        if self.broker.is_nxdomain('NSEC3'):
             self.result_messages.append("NSEC3 not in use")
             return
 
-        for nsecp in self.broker.get_records('NSEC3PARAM'):
+        for nsecp in self.broker.get_records('NSEC3'):
             alg=nsecp["algorithm"]
             if alg!=1:
                 self.result_type= RESULTTYPE_BAD
@@ -462,26 +434,26 @@ class NSEC3PARAMOptOut(TestBase):
         self.description = "NSEC3 Opt-out should only be used in large domains with many delegations (TLDs etc)"
 
     def do_we_have_what_we_need(self):
-        if not self.broker.have_completed("NSEC3PARAM"):
+        if not self.broker.have_completed("NSEC3"):
             return False
         return True
 
     def run_test(self):
-        if self.broker.is_nxdomain('NSEC3PARAM'):
+        if self.broker.is_nxdomain('NSEC3'):
             self.result_type = RESULTTYPE_GOOD
             self.result_messages.append("NSEC3 is not in use.")
             return
 
-        nsec3params = self.broker.get_records("NSEC3PARAM")
+        nsec3params = self.broker.get_records("NSEC3")
         for nsecparam in nsec3params:
             if nsecparam['flags'] & 1:
                 self.result_type = RESULTTYPE_BAD
-                self.result_messages.append("NSEC3PARAM opt-out is set")
+                self.result_messages.append("NSEC3 opt-out is set")
                 return
 
             if nsecparam['flags'] != 0:
                 self.result_type = RESULTTYPE_BAD
-                self.result_messages.append("NSEC3PARAM unused flags are set")
+                self.result_messages.append("NSEC3 unused flags are set")
                 return
 
         self.result_type = RESULTTYPE_GOOD
