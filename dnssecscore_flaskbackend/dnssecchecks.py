@@ -50,7 +50,11 @@ class DNSInfoBroker(object):
 
     def get_records(self, rtype):
         rtype = rtype.upper()
-        return self.domaininfo['LOCAL_DNSSEC'][rtype][rtype]
+        answers =  self.domaininfo['LOCAL_DNSSEC'][rtype]
+        if rtype in answers:
+            return answers[rtype]
+        else:
+            return []
 
     def get_rrsigs(self, rtype):
         rtype = rtype.upper()
@@ -416,11 +420,13 @@ class NSEC3HashAlgo(TestBase):
 
     def run_test(self):
         self.result_type = RESULTTYPE_GOOD
-        if self.broker.is_nxdomain('NSEC3'):
+
+        nsec3recs = self.broker.get_records('NSEC3')
+        if len(nsec3recs)==0:
             self.result_messages.append("NSEC3 not in use")
             return
 
-        for nsecp in self.broker.get_records('NSEC3'):
+        for nsecp in nsec3recs:
             alg=nsecp["algorithm"]
             if alg!=1:
                 self.result_type= RESULTTYPE_BAD
@@ -439,19 +445,21 @@ class NSEC3PARAMOptOut(TestBase):
         return True
 
     def run_test(self):
-        if self.broker.is_nxdomain('NSEC3'):
+
+        nsec3recs = self.broker.get_records('NSEC3')
+        if len(nsec3recs)==0:
             self.result_type = RESULTTYPE_GOOD
-            self.result_messages.append("NSEC3 is not in use.")
+            self.result_messages.append("NSEC3 not in use")
             return
 
-        nsec3params = self.broker.get_records("NSEC3")
-        for nsecparam in nsec3params:
-            if nsecparam['flags'] & 1:
+
+        for nsec3 in nsec3recs:
+            if nsec3['flags'] & 1:
                 self.result_type = RESULTTYPE_BAD
                 self.result_messages.append("NSEC3 opt-out is set")
                 return
 
-            if nsecparam['flags'] != 0:
+            if nsec3['flags'] != 0:
                 self.result_type = RESULTTYPE_BAD
                 self.result_messages.append("NSEC3 unused flags are set")
                 return
