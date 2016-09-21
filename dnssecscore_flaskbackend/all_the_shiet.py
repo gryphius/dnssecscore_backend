@@ -7,14 +7,14 @@ import time
 import pprint
 import multiprocessing.pool
 import struct
-
+TIMEOUT = 3
 
 def dnskey_shiet(domain, dns_server = "8.8.8.8", output = False):
     dnskey_request = dns.message.make_query(domain, dns.rdatatype.DNSKEY)
     dnskey_request.want_dnssec()
-    dnskey_answers = dns.query.udp(dnskey_request, dns_server)
+    dnskey_answers = dns.query.udp(dnskey_request, dns_server, timeout=TIMEOUT)
     if dnskey_answers.flags & dns.flags.TC:
-        dnskey_answers = dns.query.tcp(dnskey_request, dns_server)
+        dnskey_answers = dns.query.tcp(dnskey_request, dns_server, timeout=TIMEOUT)
     dnskey_answers = dnskey_answers.answer
 
     if output:
@@ -64,9 +64,9 @@ def dnskey_shiet(domain, dns_server = "8.8.8.8", output = False):
 def soa_shiet(domain, dns_server = "8.8.8.8", output = False):
     soa_request = dns.message.make_query(domain, dns.rdatatype.SOA)
     soa_request.want_dnssec()
-    soa_answers = dns.query.udp(soa_request, dns_server)
+    soa_answers = dns.query.udp(soa_request, dns_server, timeout=TIMEOUT)
     if soa_answers.flags & dns.flags.TC:
-        soa_answers = dns.query.tcp(soa_request, dns_server)
+        soa_answers = dns.query.tcp(soa_request, dns_server, timeout=TIMEOUT)
     soa_answers = soa_answers.answer
 
     if output:
@@ -107,9 +107,9 @@ def soa_shiet(domain, dns_server = "8.8.8.8", output = False):
 def ds_shiet(domain, dns_server = "8.8.8.8", output = False):
     ds_request = dns.message.make_query(domain, dns.rdatatype.DS)
     ds_request.want_dnssec()
-    ds_answers = dns.query.udp(ds_request, dns_server)
+    ds_answers = dns.query.udp(ds_request, dns_server, timeout=TIMEOUT)
     if ds_answers.flags & dns.flags.TC:
-        ds_answers = dns.query.tcp(ds_request, dns_server)
+        ds_answers = dns.query.tcp(ds_request, dns_server, timeout=TIMEOUT)
     ds_answers = ds_answers.answer
 
     if output:
@@ -154,9 +154,9 @@ def ds_shiet(domain, dns_server = "8.8.8.8", output = False):
 def nsec3param_shiet(domain, dns_server = "8.8.8.8", output = False):
     nsec3param_request = dns.message.make_query(domain, dns.rdatatype.NSEC3PARAM)
     nsec3param_request.want_dnssec()
-    nsec3param_answers = dns.query.udp(nsec3param_request, dns_server)
+    nsec3param_answers = dns.query.udp(nsec3param_request, dns_server, timeout=TIMEOUT)
     if nsec3param_answers.flags & dns.flags.TC:
-        nsec3param_answers = dns.query.tcp(nsec3param_request, dns_server)
+        nsec3param_answers = dns.query.tcp(nsec3param_request, dns_server, timeout=TIMEOUT)
     nsec3param_answers = nsec3param_answers.answer
 
     if output:
@@ -200,6 +200,28 @@ def nsec3param_shiet(domain, dns_server = "8.8.8.8", output = False):
                 print "----------------------------"
 
     return response
+
+
+
+def nsec3_shiet(domain, dns_server = "8.8.8.8", output = False):
+    nsec3_request = dns.message.make_query("nsec3testnoexist"+domain, dns.rdatatype.NSEC3)
+    nsec3_request.want_dnssec()
+    nsec3_answers = dns.query.udp(nsec3_request, dns_server, timeout=TIMEOUT)
+    if nsec3_answers.flags & dns.flags.TC:
+        nsec3_answers = dns.query.tcp(nsec3_request, dns_server, timeout=TIMEOUT)
+    nsec3param_answers = nsec3_answers.authority
+
+    if output:
+        print "NSEC3" #hash alg, num of iter, salt, ttl
+        print "============================"
+    response = dict()
+
+    for authority in nsec3param_answers:
+        for rrset in authority:
+            if rrset.__class__ == dns.rdtypes.ANY.NSEC3.NSEC3:
+                print "got one!"
+
+
 
 
 
@@ -254,3 +276,7 @@ def calc_keyid(flags, protocol, algorithm, st):
     ret = ((cnt & 0xFFFF) + (cnt >> 16)) & 0xFFFF
 
     return (ret)
+
+
+if __name__=='__main__':
+    nsec3_shiet('protonmail.ch',output=True)
