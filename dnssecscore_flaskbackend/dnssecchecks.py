@@ -167,8 +167,9 @@ class HaveDS(TestBase):
             self.result_messages.append("No DS records for %s. This probably means that this domain is an island of security and we can not actually verify it"%self.broker.domain)
             return
 
-        ds = self.broker.get_records('DS')
-        numds = len(ds)
+        dsrec = self.broker.get_records('DS')
+        dskeytags = set([ds['key_tag'] for ds in dsrec])
+        numds = len(dskeytags)
         self.result_messages.append("found %s DS records" % numds)
         if numds>2:
             self.result_messages.append("More than two DS records are pointless")
@@ -234,45 +235,60 @@ class RRSIGTimes(TestBase):
     def run_test(self):
         now=int(time.time())
         clock_skew_offset=3600
-        minimum_days_left = 5
+        # signatures should be refreshed within validity_ratio %
+        # of the validity period
+        validity_ratio = 0.7
+        # signatures valid for more days have a risk for replay-attacks
+        maximum_days = 90
 
         problem = False
         warning = False
-
-        all_inceptions=[]
-        all_expirations=[]
 
         for rdtype,val in self.broker.domaininfo['LOCAL_DNSSEC'].iteritems():
             if 'RRSIG' not in val:
                 continue
             for rrsig in val['RRSIG']:
                 inception = rrsig['inception']
-                all_inceptions.append(inception)
+                expiration = rrsig['expiration']
+                ttl = rrsig['original_ttl']
+
+                # check if validity period has started
                 if inception>now:
                     problem = True
-                    self.result_messages.append("RRSIG for %s key tag %s is not yet valid"%(rdtype,rrsig['key_tag'])) #
-
+                    self.result_messages.append("RRSIG for %s key tag %s is not yet valid"%(rdtype,rrsig['key_tag']))
+                # check if inception time accounts for clock skew offset
                 if abs(inception-now)<clock_skew_offset:
                     warning = True
                     self.result_messages.append(
-                        "RRSIG for %s key tag %s is dangerously close to now - clock skew on resolvers will cause validation failure" % (rdtype, rrsig['key_tag']))  #
+                        "RRSIG for %s key tag %s is dangerously close to now - clock skew on resolvers will cause validation failure" % (rdtype, rrsig['key_tag']))
 
                 expiration = rrsig['expiration']
-                all_expirations.append(expiration)
+                # check if expiration time expired
                 if expiration<now:
                     problem = True
                     self.result_messages.append(
-                        "RRSIG for %s key tag %s has expired!" % (rdtype, rrsig['key_tag']))  #
-
-        days_until_expiration = max(0,int((min(all_expirations)-now) / (24*3600)))
-        self.result_messages.append(
-            "RRSIG will expire in %s days" % (days_until_expiration) ) #
-
-        if days_until_expiration < minimum_days_left:
-            warning = True
-            self.result_messages.append(
-            "RRSIG are dangerously close to expiration, resign the zone!" )
-
+                        "RRSIG for %s key tag %s has expired!" % (rdtype, rrsig['key_tag']))
+                # check if remaining validity period is long enough
+                validity_period = int(expiration-inception)
+                if int(validity_ratio*validity_period)+inception < now:
+                    warning = True
+                    self.result_messages.append(
+                    "RRSIG for %s key tag %s is dangerously close to expiration, resign the zone!" % (rdtype, rrsig['key_tag']))
+                # check expiration time for replay-attack risk
+                # https://tools.ietf.org/html/rfc6781#section-4.4.2.1
+                time_until_expiration = expiration-now
+                days_until_expiration = int(time_until_expiration / (23*3600))
+                if days_until_expiration > maximum_days:
+                    warning = True
+                    self.result_messages.append(
+                    "RRSIG expiration for %s key tag %s is long into the future, risk of replay attack!" % (rdtype, rrsig['key_tag']))
+                # check if time until expiration is greater than TTL.
+                # Assures that forwarding resolvers can validate signature too
+                # https://tools.ietf.org/html/rfc6781#section-4.4.1
+                if time_until_expiration < ttl:
+                    warning = True
+                    self.result_messages.append(
+                    "RRSIG expiration for %s key tag %s is before remaining time of TTL, forwarding resolvers may not be able to validate RRSIG" % (rdtype, rrsig['key_tag']))
 
         if problem:
             self.result_type = RESULTTYPE_BAD
