@@ -274,6 +274,7 @@ class RRSIGTimes(TestBase):
         problem = False
         warning = False
 
+        # TODO: Only check RRSIG from DNSKEY which are part of the trust chain
         for rdtype,val in self.broker.domaininfo['LOCAL_DNSSEC'].iteritems():
             if 'RRSIG' not in val:
                 continue
@@ -288,9 +289,9 @@ class RRSIGTimes(TestBase):
                     self.result_messages.append("RRSIG for %s key tag %s is not yet valid"%(rdtype,rrsig['key_tag']))
                 # check if inception time accounts for clock skew offset
                 if abs(inception-now)<clock_skew_offset:
-                    warning = True
+                    problem = True
                     self.result_messages.append(
-                        "RRSIG for %s key tag %s is dangerously close to now - clock skew on resolvers will cause validation failure" % (rdtype, rrsig['key_tag']))
+                        "RRSIG inception for %s key tag %s less than one hour from now - clock skew on resolvers will cause validation failure" % (rdtype, rrsig['key_tag']))
 
                 expiration = rrsig['expiration']
                 # check if expiration time expired
@@ -298,6 +299,12 @@ class RRSIGTimes(TestBase):
                     problem = True
                     self.result_messages.append(
                         "RRSIG for %s key tag %s has expired!" % (rdtype, rrsig['key_tag']))
+
+                # abort if problems exists
+                if problem:
+                    self.result_type = RESULTTYPE_BAD
+                    return
+
                 # check if remaining validity period is long enough
                 validity_period = int(expiration-inception)
                 if int(validity_ratio*validity_period)+inception < now:
