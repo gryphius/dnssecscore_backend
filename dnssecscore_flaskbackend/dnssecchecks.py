@@ -21,7 +21,7 @@ TESTRESULTTYPE_SECURE = "S"
 TESTRESULTTYPE_ERROR = "E"
 
 DNSDICT_AVAILABLE =False # check if our cool dnslookup to dict function is ready
-from dnsdict import dnsdict
+from dnsdict import dnsdict, dshash
 
 
 class DNSInfoBroker(object):
@@ -179,6 +179,18 @@ class HaveDS(TestBase):
         self.result_type = RESULTTYPE_GOOD
 
 class DSDigestAlgo(TestBase):
+    """Check DS Algorithms
+    For *every* KSK key tag with a corresponding DS the DS must have a correct SHA2 digest
+
+
+    Test:
+     - get all KSK key tags
+     - get all DS records
+     - for every KSK key tag where there is at least one matching DS key tag:
+            - if the digest is not correct, the max score is "WARN", we can not return "GOOD"
+            - if the digest is type 2, this particular key tag is ok
+     - if all key tags are ok, the result is GOOD, BAD otherwise
+    """
     def __init__(self, broker):
         TestBase.__init__(self, broker)
         self.name = "DS record hash algorithm"
@@ -186,6 +198,8 @@ class DSDigestAlgo(TestBase):
 
     def do_we_have_what_we_need(self):
         if not self.broker.have_completed('DS'):
+            return False
+        if not self.broker.have_completed('DNSKEY'):
             return False
         return True
 
@@ -199,25 +213,41 @@ class DSDigestAlgo(TestBase):
         restype = None
 
         dsrecs = self.broker.get_records('DS')
+        dnskeys = self.broker.get_records('DNSKEY')
+        #print [x.keys() for x in dnskeys]
+        dnskeytags = set([key['i_key_tag'] for key in dnskeys if key['flags'] & 1 == 1 ])
+        dskeytags = set([ds['key_tag'] for ds in dsrecs])
 
-        have_typetwo = False
-        for ds in dsrecs:
-            digest_type = ds.get('digest_type')
-            if digest_type == 1:
-                restype = RESULTTYPE_BAD
-                self.result_messages.append('There is a DS record with insecure hash type 1')
+        checkdskeytags = [tag for tag in  dnskeytags if tag in dskeytags]
+        # checkdskeytags now contains a list of key tags whic
 
-            if digest_type == 2:
-                have_typetwo = True
 
-        if not have_typetwo:
-            restype = RESULTTYPE_BAD
-            self.result_messages.append("DS hash type 2 must be available, but it isn't")
+        for ktag in checkdskeytags:
+            have_type2=False
+            matching_ds = [ds for ds in dsrecs if ds['key_tag']==ktag]
+            # we assume that the same key tag is only used by one DNSKEY. if there are multiple, the domain is proably broken anyway
+            dnskey = [key for key in dnskeys if key['i_key_tag']==ktag][0]
+            calculated_ds = dnskey['i_calculated_ds']
+            for dsrec in matching_ds:
+                actual_hash = dsrec['i_digeststr']
+                actual_algo = dsrec['digest_type']
+                if actual_algo == 2:
+                    have_type2 = True
+                if actual_algo not in calculated_ds:
+                    self.result_messages.append("Unsupported ds hash algorithm %s in key tag %s"%(actual_algo,ktag))
+                    self.result_type = RESULTTYPE_BAD
+                    return
+                if calculated_ds[actual_algo]!=actual_hash:
+                    self.result_messages.append("DS Hash mismatch in key tag %s.calculated hash=%s, DS hash=%s , " % (ktag,calculated_ds[actual_algo],actual_hash))
+                    self.result_type = RESULTTYPE_BAD
+                    return
 
-        if restype==None:
-            restype = RESULTTYPE_GOOD
+            if not have_type2:
+                self.result_type = RESULTTYPE_BAD
+                self.result_messages.append("DS hash type 2 missing in key tag %s"%ktag)
+                return
 
-        self.result_type = restype
+        self.result_type = RESULTTYPE_GOOD
 
 class RRSIGTimes(TestBase):
     def __init__(self, broker):

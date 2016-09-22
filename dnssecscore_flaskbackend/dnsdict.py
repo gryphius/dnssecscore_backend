@@ -8,6 +8,26 @@ import sys
 import pprint
 import base64
 import struct
+import hashlib
+import binascii
+
+def dshash(domain, dnskey_binary, flags=1, protocol=3, algorithm_no=13):
+    if not domain.endswith('.'):
+        domain += '.'
+
+    signature = bytes()
+    for i in domain.split('.'):
+        signature += struct.pack('B', len(i)) + i.encode()
+
+    signature += struct.pack('!HBB', int(flags), int(protocol), int(algorithm_no))
+    signature += dnskey_binary
+
+    return {
+        1:  hashlib.sha1(signature).hexdigest().upper(),
+        2:  hashlib.sha256(signature).hexdigest().upper(),
+        4:  hashlib.sha384(signature).hexdigest().upper(),
+    }
+
 
 
 #from https://www.v13.gr/blog/?p=239
@@ -54,9 +74,15 @@ def hash_algo_to_text(algo):
     else:
         return 'Unassigned'
 
+def rrset_to_dict(rrset,dic,section,qname=None):
+    """
 
-
-def rrset_to_dict(rrset,dic,section):
+    :param rrset:
+    :param dic:
+    :param section:
+    :param qname: the qname is used to add additional information to DNSKEY
+    :return:
+    """
 
     for rr in rrset:
         d=dict()
@@ -78,8 +104,14 @@ def rrset_to_dict(rrset,dic,section):
             b64key = base64.b64encode(binkey)
             d['i_key_base64'] = b64key
             d['i_key_tag'] = calc_keyid(rr.flags, rr.protocol, rr.algorithm, b64key)
-            d['i_key_bits'] = len(binkey)*8 #TODO: this seems to be wrong
+            # https://blog.surf.nl/en/manually-checking-dnssec-signatures/
+            if binkey[:4] == '\x03\x01\x00\x01': # this is a RSA key
+                d['i_key_bits'] = (len (binkey)-4) * 8
             d['i_key_algostr'] = dns.dnssec.algorithm_to_text(keyalgo)
+            if qname!=None:
+                calculated_ds = dshash(qname, d['key'], flags=d['flags'],
+                                       protocol=d['protocol'], algorithm_no=d['algorithm'])
+                d['i_calculated_ds'] = calculated_ds
 
         if rectype=='RRSIG':
             binsig=d['signature']
@@ -89,6 +121,7 @@ def rrset_to_dict(rrset,dic,section):
         if rectype=='DS':
             digest_type=d['digest_type']
             d['i_digest_typestr'] = hash_algo_to_text(digest_type)
+            d['i_digeststr'] = binascii.hexlify(d['digest']).upper()
 
         dic[rectype].append(d)
     return dic
@@ -115,8 +148,7 @@ def query_to_dict(qname, qtype, nameserver='8.8.8.8', timeout=3, request_dnssec_
     retval = dict()
     for section in ['answer', 'authority', 'additional']:
         for answer in getattr(reply,section):
-            rrset_to_dict(answer, retval, section)
-
+            rrset_to_dict(answer, retval, section,qname=qname)
 
     rcode = reply.rcode()
     retval['_META']={
