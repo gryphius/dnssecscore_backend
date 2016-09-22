@@ -435,7 +435,7 @@ class KeyType(TestBase):
         badalgos={}
 
         for key in dnskeys:
-            tag = key.get('key_tag')
+            tag = key.get('i_key_tag')
             algo = key['algorithm']
             if algo!=self.expected_keyalgo:
                 if algo not in badalgos:
