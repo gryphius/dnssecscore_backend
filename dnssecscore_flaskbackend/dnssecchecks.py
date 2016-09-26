@@ -499,5 +499,3 @@ class NSEC3PARAMOptOut(TestBase):
 all_tests=[AreWeSigned, HaveDS, DSDigestAlgo, RRSIGTimes,
 RRSIGForEachDSAlgorithm, DanglingDS, NumberOfDNSKEYs, KeyType, NSEC3HashAlgo, NSEC3PARAMOptOut
 ]
-
-# Dummies we can use for testing DummyInfo, DummyGood, DummyBad,]
