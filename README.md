@@ -7,8 +7,6 @@ similar to the qualys SSL test for webservers.
 
 [![Travis build status](https://travis-ci.org/gryphius/dnssecscore_backend.svg?branch=master)](https://travis-ci.org/gryphius/dnssecscore_backend)
 
-![Travis build status](https://travis-ci.org/gryphius/dnssecscore_backend.svg?branch=master "Travis build status")
-
 ## Tests
 | Test                                | Description           | Remarks | Implementation status  | Unit Test Coverage |
 | ----------------------------------- | --------------------- | ------- | ---------------------- | ------------------ |
