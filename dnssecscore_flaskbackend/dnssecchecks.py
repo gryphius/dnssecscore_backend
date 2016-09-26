@@ -99,35 +99,6 @@ class DummyInfo(TestBase):
         self.result_messages = ["This is just a dummy info message to see if things are working. ", ]
 
 
-class DummyGood(TestBase):
-    def __init__(self, broker):
-        TestBase.__init__(self, broker)
-        self.name = "Successful test dummy"
-        self.description = "This test always succeeds - how nice!"
-
-    def do_we_have_what_we_need(self):
-        return True
-
-    def run_test(self):
-        self.result_type = RESULTTYPE_GOOD
-        self.result_weight  = 1
-        self.result_messages = ["This is just a dummy success result. That mean's you've passed... YAY!", ]
-
-class DummyBad(TestBase):
-    def __init__(self, broker):
-        TestBase.__init__(self, broker)
-        self.name = "Failed test dummy"
-        self.description = "This test always fails - and there is NOTHING you can do about it..muahahaha"
-
-    def do_we_have_what_we_need(self):
-        return True
-
-    def run_test(self):
-        self.result_type = RESULTTYPE_BAD
-        self.result_weight  = 1
-        self.result_messages = ["This is just a dummy fail result. Sorry to say you've failed this one... BOOOH!", ]
-
-
 # the real tests
 class AreWeSigned(TestBase):
     def __init__(self, broker):
