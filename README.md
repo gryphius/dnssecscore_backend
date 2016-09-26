@@ -10,7 +10,7 @@ similar to the qualys SSL test for webservers.
 ## Tests
 | Test                                | Description           | Remarks | Implementation status  | Unit Test Coverage |
 | ----------------------------------- | --------------------- | ------- | ---------------------- | ------------------ |
-| check if zone is signed             | check if DNSKEY RR present| if not signed, abort and return I(nsecure) status | implemented | NO | 
+| check if zone is signed             | check if DNSKEY RR present| if not signed, abort and return I(nsecure) status | implemented | YES |
 | dnssec validation check             | if validating resolver returns SRVFAIL but local check succeeds, assume validation error   | link to dnsviz/verisign for debugging validation erros | dns backend ready, test missing| NO |
 | DS in parent                        | Test if the parent has DS for this zone      | if not, island of security and therefore T(rust) issue   | implemented |
 | DS digest-type                      | Test if every keytag in the DS set provides SHA2    | SHA-1 vs. SHA-256 Considerations for DS Records https://tools.ietf.org/html/rfc4509#section-6.2, http://www.iana.org/assignments/ds-rr-types/ds-rr-types.xhtml    | implemented | NO |
