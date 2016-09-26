@@ -25,16 +25,15 @@ from dnsdict import dnsdict, dshash
 
 
 class DNSInfoBroker(object):
-    def __init__(self, domain):
+    def __init__(self, domain = None):
         self.domaininfo={}
         self.domain = domain
 
-        self._load_info()
+        if self.domain!=None:
+            self._load_info()
 
     def _load_info(self):
         self.domaininfo = dnsdict(self.domain)
-        print pprint.pformat(self.domaininfo)
-
 
     def have_completed(self, rtype):
         return True
@@ -44,6 +43,14 @@ class DNSInfoBroker(object):
         if  self.domaininfo['LOCAL_DNSSEC'][rtype]['_META']['i_rcode'] == 3:
             return True
         if  rtype not in self.domaininfo['LOCAL_DNSSEC'][rtype]: # no answer for this query
+            return True
+
+        val = self.domaininfo['LOCAL_DNSSEC'][rtype][rtype]
+
+        if val == None:  # value = None is treated the same way as no key
+            return True
+
+        if len(val)== 0: # empty list is treated the same way
             return True
 
         return False
@@ -59,8 +66,6 @@ class DNSInfoBroker(object):
     def get_rrsigs(self, rtype):
         rtype = rtype.upper()
         return self.domaininfo['LOCAL_DNSSEC'][rtype]['RRSIG']
-
-
 
 class TestBase(object):
     def __init__(self,broker):
@@ -84,21 +89,6 @@ class TestBase(object):
         pass
 
 
-class DummyInfo(TestBase):
-    def __init__(self, broker):
-        TestBase.__init__(self, broker)
-        self.name = "Important information"
-        self.description = "This block well tell you something really informative"
-        self.result_weight = 0
-
-    def do_we_have_what_we_need(self):
-        return True
-
-    def run_test(self):
-        self.result_type = RESULTTYPE_NEUTRAL
-        self.result_messages = ["This is just a dummy info message to see if things are working. ", ]
-
-
 # the real tests
 class AreWeSigned(TestBase):
     def __init__(self, broker):
@@ -118,8 +108,6 @@ class AreWeSigned(TestBase):
             self.result_messages.append("No DNSKEY records in %s"%self.broker.domain)
             return
         self.result_type = RESULTTYPE_GOOD
-
-        dnskeys = self.broker.get_records('DNSKEY')
 
 
 class HaveDS(TestBase):

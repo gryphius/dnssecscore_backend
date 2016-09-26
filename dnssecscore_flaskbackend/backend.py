@@ -5,10 +5,28 @@ import time
 import pprint
 import traceback
 from dnsdict import dnsdict
+import dns
+import collections
+
+def replace_dnsname(nested):
+    """recursively iterate through nested and replace dns.name.name objects and binary data"""
+    if isinstance(nested, collections.Mapping):
+        for key, value in nested.iteritems():
+            if isinstance(value, dns.name.Name):
+                nested[key] = str(value)
+            elif key in ('signature','window', 'key', 'digest'):
+                nested[key]="(binary value)"
+            if isinstance(value, collections.Mapping):
+                replace_dnsname(value)
+            elif type(value) == type([]):
+                for l in value:
+                    replace_dnsname(l)
 
 @app.route('/dnsdict/<domainname>')
 def dndsict(domainname):
+    """show the backend dict ( for developing)"""
     dic = dnsdict(domainname, timeout=6)
+    replace_dnsname(dic)
     pretty=pprint.pformat(dic)
     tmpl="<PRE>%s</PRE>"%pretty
     return tmpl
