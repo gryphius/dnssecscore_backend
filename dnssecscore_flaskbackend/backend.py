@@ -83,12 +83,20 @@ class DNSSECTest(object):
             "tests":[],
         }
 
-        score = 100
-        score_subtract_per_test = 100.0/(len(all_tests))
+        max_score = 100.0
+        score = 0.0
+        default_score_per_test = max_score/(sum([t.result_weight for t in self.testresults]))
 
         for result in self.testresults:
-            if result.result_type in ( RESULTTYPE_BAD, RESULTTYPE_WARNING):
-                score -= (score_subtract_per_test * result.result_weight )
+            res_score = result.result_score
+            if res_score==None:
+                if result.result_type == RESULTTYPE_BAD:
+                    res_score = 0
+                elif result.result_type == RESULTTYPE_WARNING:
+                    res_score = 0.9
+                else:
+                    res_score = 1
+            score += ( result.result_weight * res_score * default_score_per_test)
             resultinfo = {
                 "name": result.name,
                 "description": result.description,

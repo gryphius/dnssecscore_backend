@@ -71,12 +71,14 @@ class TestBase(object):
         self.shortcircuit = None # set a TESTRESULTTYPE_... to abort all tests
 
         self.result_type = RESULTTYPE_UNKNOWN
-        self.result_weight = 1 # how important is this test. 0 for "informative only"
+        self.result_weight = 1 # how important is this test. 0 for "informative only", 1 is standard
+        self.result_score = None # set this in run_test.None means: let the test engine decide based on the test result ("auto"). 0 means completely failed, 1 means everything passed. more than 1 means "extra points"
         self.result_messages = []
+
 
     def do_we_have_what_we_need(self):
         #ask the broker if the records have been completed
-        return False
+        return True
 
     def run_test(self):
         pass
