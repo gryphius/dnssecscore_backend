@@ -19,6 +19,8 @@ TESTRESULTTYPE_ERROR = "E"
 from dnsdict import dnsdict, dshash
 import sys
 
+all_tests = []
+
 class DNSInfoBroker(object):
     def __init__(self, domain = None):
         self.domaininfo={}
@@ -103,6 +105,7 @@ class AreWeSigned(TestBase):
             self.result_messages.append("No DNSKEY records in %s"%self.broker.domain)
             return
         self.result_type = RESULTTYPE_GOOD
+all_tests.append(AreWeSigned)
 
 
 class HaveDS(TestBase):
@@ -134,6 +137,7 @@ class HaveDS(TestBase):
             return
 
         self.result_type = RESULTTYPE_GOOD
+all_tests.append(HaveDS)
 
 class DSDigestAlgo(TestBase):
     """Check DS Algorithms
@@ -205,6 +209,7 @@ class DSDigestAlgo(TestBase):
                 return
 
         self.result_type = RESULTTYPE_GOOD
+all_tests.append(DSDigestAlgo)
 
 class RRSIGTimes(TestBase):
     def __init__(self, broker):
@@ -289,6 +294,7 @@ class RRSIGTimes(TestBase):
             self.result_type = RESULTTYPE_WARNING
         else:
             self.result_type = RESULTTYPE_GOOD
+all_tests.append(RRSIGTimes)
 
 class RRSIGForEachDSAlgorithm(TestBase):
     def __init__(self, broker):
@@ -317,6 +323,7 @@ class RRSIGForEachDSAlgorithm(TestBase):
             self.result_messages.append("An RRSIG in DNSKEY is missing for %d algorithms!", len(diff))
         else:
             self.result_type = RESULTTYPE_GOOD
+all_tests.append(RRSIGForEachDSAlgorithm)
 
 class DanglingDS(TestBase):
     def __init__(self, broker):
@@ -345,6 +352,7 @@ class DanglingDS(TestBase):
             self.result_messages.append("Dangling DS record(s) for missing key tag(s) %s"% " ".join([str(tag) for tag in diff]))
         else:
             self.result_type = RESULTTYPE_GOOD
+all_tests.append(DanglingDS)
 
 class NumberOfDNSKEYs(TestBase):
     def __init__(self, broker):
@@ -369,6 +377,7 @@ class NumberOfDNSKEYs(TestBase):
             self.result_messages.append("Too many DNSKEYs present. Not more than three are needed (zone signing key, key signing key and a rollover key).")
         else:
             self.result_type = RESULTTYPE_GOOD
+all_tests.append(NumberOfDNSKEYs)
 
 class KeyType(TestBase):
     def __init__(self, broker):
@@ -411,7 +420,7 @@ class KeyType(TestBase):
             self.result_messages.append("all keys are using "+self.expected_keyalgo_text)
         else:
             self.result_messages.append("we recommend upgrading to %s(%s)" %( self.expected_keyalgo_text,self.expected_keyalgo))
-
+all_tests.append(KeyType)
 
 
 
@@ -441,6 +450,7 @@ class NSEC3HashAlgo(TestBase):
                 self.result_type= RESULTTYPE_BAD
                 self.result_messages.append("NSEC3 hash algorithm is %s instead of 1"%alg)
                 return
+all_tests.append(NSEC3HashAlgo)
 
 class NSEC3PARAMOptOut(TestBase):
     def __init__(self, broker):
@@ -474,15 +484,7 @@ class NSEC3PARAMOptOut(TestBase):
                 return
 
         self.result_type = RESULTTYPE_GOOD
-
-
-
-
-
-all_tests=[AreWeSigned, HaveDS, DSDigestAlgo, RRSIGTimes,
-RRSIGForEachDSAlgorithm, DanglingDS, NumberOfDNSKEYs, KeyType, NSEC3HashAlgo, NSEC3PARAMOptOut
-]
-
+all_tests.append(NSEC3PARAMOptOut)
 
 # Console mode
 
