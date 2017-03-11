@@ -21,6 +21,7 @@ similar to the qualys SSL test for webservers.
 | DNSKEY RRSIG for each DS algo       | 2.2 of RFC 4035   (narrow rollover)    |     | implemented | NO |
 | DNSKEY key size                     | e.g. RSA: lt 1024 bit is bad. gt 4096 is not supported by RFC   |     | backend info available, no test | NO |
 | DNSKEY algorithm usage              | favor ECDSA keys  | see also https://tools.ietf.org/html/draft-wouters-sury-dnsop-algorithm-update-01  | implemented | NO |
+| SEP Flag tests(ZSK vs KSK)          | check if DS point to KSKs only, check if the DNSKEY RRSET is only signed by KSK  |   | implemented | NO |
 | dangling DS                         | check if there are DS without matching DNSKEY    | warning only, this could be valid (stand by key)| implemented | NO |
 | number of DS                        | check number of DS RR in parent zone   | more than one spare DS is pointless | implemented | NO |
 | nsec3 opt-out usage                 | check if zone is not using opt-out | see RFC5155, Security Considerations 12.2 | implemented | NO |
