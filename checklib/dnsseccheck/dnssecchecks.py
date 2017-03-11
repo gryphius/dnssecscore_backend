@@ -145,9 +145,9 @@ class DSDigestAlgo(TestBase):
 
 
     Test:
-     - get all KSK key tags
+     - get all key tags
      - get all DS records
-     - for every KSK key tag where there is at least one matching DS key tag:
+     - for every key tag where there is at least one matching DS key tag:
             - if the digest is not correct, the max score is "WARN", we can not return "GOOD"
             - if the digest is type 2, this particular key tag is ok
      - if all key tags are ok, the result is GOOD, BAD otherwise
@@ -175,13 +175,10 @@ class DSDigestAlgo(TestBase):
 
         dsrecs = self.broker.get_records('DS')
         dnskeys = self.broker.get_records('DNSKEY')
-        #print [x.keys() for x in dnskeys]
         dnskeytags = set([key['i_key_tag'] for key in dnskeys])
         dskeytags = set([ds['key_tag'] for ds in dsrecs])
 
         checkdskeytags = [tag for tag in  dnskeytags if tag in dskeytags]
-        # checkdskeytags now contains a list of key tags whic
-
 
         for ktag in checkdskeytags:
             have_type2=False
