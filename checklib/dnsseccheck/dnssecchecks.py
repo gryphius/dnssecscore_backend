@@ -1,7 +1,7 @@
 from __future__ import print_function
 import time
 from dns.dnssec import algorithm_to_text
-
+import argparse
 
 NXDOMAIN = None
 RESULTTYPE_UNKNOWN = "unknown"
@@ -22,15 +22,17 @@ import sys
 all_tests = []
 
 class DNSInfoBroker(object):
-    def __init__(self, domain = None):
+    def __init__(self, domain = None, resolver='8.8.8.8'):
         self.domaininfo={}
         self.domain = domain
+        self.resolver = resolver
 
         if self.domain!=None:
             self._load_info()
 
+
     def _load_info(self):
-        self.domaininfo = dnsdict(self.domain)
+        self.domaininfo = dnsdict(self.domain, nameserver=self.resolver)
 
     def have_completed(self, rtype):
         return True
@@ -582,8 +584,15 @@ class FunkyConsole(object):
 
 
 def main():
-    domain = sys.argv[1] # TODO: argparse, resolver ...
-    broker = DNSInfoBroker(domain)
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("domain")
+    parser.add_argument("-r","--resolver", help="DNSSEC validating resolver to use", default='8.8.8.8')
+
+    args = parser.parse_args()
+
+    domain = args.domain
+    broker = DNSInfoBroker(domain, resolver=args.resolver)
     console = FunkyConsole()
     for testclass in all_tests:
         testinstance = testclass(broker)

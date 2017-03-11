@@ -160,7 +160,7 @@ def query_to_dict(qname, qtype, nameserver='8.8.8.8', timeout=3, request_dnssec_
 
 
 
-def dnsdict(domain,qtypes=None, timeout=3):
+def dnsdict(domain,qtypes=None, timeout=3, nameserver='8.8.8.8'):
     if qtypes is None:
         qtypes = ['SOA', 'A', 'MX', 'DNSKEY', 'DS', 'NS']
     root = dict()
@@ -168,11 +168,11 @@ def dnsdict(domain,qtypes=None, timeout=3):
     remote_dnssec = dict()
 
     for t in qtypes:
-        local_dnssec[t] = query_to_dict(domain, dns.rdatatype.from_text(t), timeout=timeout)
-        remote_dnssec[t] = query_to_dict(domain, dns.rdatatype.from_text(t), timeout=timeout, check_disabled=False)
+        local_dnssec[t] = query_to_dict(domain, dns.rdatatype.from_text(t), nameserver=nameserver, timeout=timeout)
+        remote_dnssec[t] = query_to_dict(domain, dns.rdatatype.from_text(t), nameserver=nameserver, timeout=timeout, check_disabled=False)
 
-    local_dnssec['NSEC'] = query_to_dict('hzwhidntx.' + domain, dns.rdatatype.NSEC, timeout=timeout)
-    local_dnssec['NSEC3'] = query_to_dict('hzwhidnty.' + domain, dns.rdatatype.NSEC3, timeout=timeout)
+    local_dnssec['NSEC'] = query_to_dict('hzwhidntx.' + domain, dns.rdatatype.NSEC, nameserver=nameserver, timeout=timeout)
+    local_dnssec['NSEC3'] = query_to_dict('hzwhidnty.' + domain, dns.rdatatype.NSEC3, nameserver=nameserver, timeout=timeout)
 
     root['LOCAL_DNSSEC'] = local_dnssec
     root['REMOTE_DNSSEC'] = remote_dnssec
