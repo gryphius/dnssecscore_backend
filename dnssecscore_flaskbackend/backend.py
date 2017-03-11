@@ -1,3 +1,8 @@
+import os
+import sys
+dir_path = os.path.dirname(os.path.realpath(__file__))
+sys.path.insert(0,os.path.abspath(dir_path+'/../checklib'))
+
 from flask import Flask, jsonify
 app = Flask(__name__)
 from dnsseccheck.dnssecchecks import all_tests, DNSInfoBroker, TESTRESULTTYPE_ERROR, TESTRESULTTYPE_SECURE, RESULTTYPE_BAD, RESULTTYPE_WARNING
