@@ -1,7 +1,11 @@
 from setuptools import setup
 
-setup(name='dnssecscheck',
-      version='0.1.0',
+setup(name='dnsseccheck',
+      version='0.0.1',
+      author="O. Schacher",
+      author_email="oli@fuglu.org",
+      description='Analyze DNSSEC configuration of a Zone and validate it against best current practises',
+      url='https://github.com/gryphius/dnssecscore_backend',
       packages=['dnsseccheck'],
       entry_points={
           'console_scripts': [
