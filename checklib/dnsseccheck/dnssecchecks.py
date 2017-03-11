@@ -419,7 +419,47 @@ class KeyType(TestBase):
             self.result_messages.append("we recommend upgrading to %s(%s)" %( self.expected_keyalgo_text,self.expected_keyalgo))
 all_tests.append(KeyType)
 
+class SEPFlag(TestBase):
+    def __init__(self, broker):
+        TestBase.__init__(self, broker)
+        self.name = "SEP Flag (KSK vs ZSK)"
+        self.description = "Checks if DS only point to KSKs (SEP flag set), check if the DNSKEY RRSET is only signed by KSKs"
 
+    def do_we_have_what_we_need(self):
+        return self.broker.have_completed("DNSKEY") and self.broker.have_completed("DS")
+
+    def run_test(self):
+        dnskeys = self.broker.get_records("DNSKEY")
+        ksks = [k for k in dnskeys if k['flags'] & 1 == 1]
+        zsks = [k for k in dnskeys if k['flags'] & 1 == 0]
+
+        zsk_key_tags = set([k['i_key_tag'] for k in zsks])
+
+        ds_key_tags = set()
+        for record in self.broker.get_records("DS"):
+            ds_key_tags.add(record["key_tag"])
+
+        self.result_type = RESULTTYPE_GOOD
+
+        if len(ksks)<1:
+            self.result_type = RESULTTYPE_BAD
+            self.result_messages.append(
+                "No KSKs in the DNSKEY RRSET")
+
+        for key_tag in ds_key_tags:
+            if key_tag in zsk_key_tags:
+                self.result_type = RESULTTYPE_BAD
+                self.result_messages.append("DS record points to a key tag %s which does not have the SEP flag set (ZSK instead of KSK)"%key_tag)
+
+        for record in self.broker.get_rrsigs('DNSKEY'):
+            key_tag = record['key_tag']
+            if key_tag in zsk_key_tags:
+                self.result_type = RESULTTYPE_BAD
+                self.result_messages.append(
+                    "DNSKEY rrset is signed with key tag %s which does not have the SEP flag set (ZSK instead of KSK)"%key_tag)
+
+
+all_tests.append(SEPFlag)
 
 class NSEC3HashAlgo(TestBase):
     def __init__(self, broker):
