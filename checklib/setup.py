@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name='dnsseccheck',
-      version='0.0.1',
+      version='0.0.2',
       author="O. Schacher",
       author_email="oli@fuglu.org",
       description='Analyze DNSSEC configuration of a Zone and validate it against best current practises',
