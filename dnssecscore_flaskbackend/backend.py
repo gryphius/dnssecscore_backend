@@ -1,10 +1,10 @@
 from flask import Flask, jsonify
 app = Flask(__name__)
-from dnssecchecks import all_tests, DNSInfoBroker, TESTRESULTTYPE_ERROR, TESTRESULTTYPE_SECURE, RESULTTYPE_BAD, RESULTTYPE_WARNING
+from dnsseccheck.dnssecchecks import all_tests, DNSInfoBroker, TESTRESULTTYPE_ERROR, TESTRESULTTYPE_SECURE, RESULTTYPE_BAD, RESULTTYPE_WARNING
 import time
 import pprint
 import traceback
-from dnsdict import dnsdict
+from dnsseccheck.dnsdict import dnsdict
 import dns
 import collections
 

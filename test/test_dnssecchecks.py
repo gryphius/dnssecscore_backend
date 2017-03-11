@@ -1,5 +1,7 @@
+#TODO: sys path to new checklib 
+
 from nosetestdata import *
-from dnssecchecks import DNSInfoBroker, AreWeSigned, RESULTTYPE_GOOD, RESULTTYPE_BAD, RESULTTYPE_NEUTRAL, RESULTTYPE_WARNING, TESTRESULTTYPE_INSECURE
+from dnsseccheck.dnssecchecks import DNSInfoBroker, AreWeSigned, RESULTTYPE_GOOD, RESULTTYPE_BAD, RESULTTYPE_NEUTRAL, RESULTTYPE_WARNING, TESTRESULTTYPE_INSECURE
 from nose.tools import assert_equal
 import copy
 

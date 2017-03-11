@@ -1,13 +1,9 @@
-import dns.resolver
-import pprint
+from __future__ import print_function
 import time
 from dns.dnssec import algorithm_to_text
 
-from dns.resolver import NoAnswer
 
 NXDOMAIN = None
-
-
 RESULTTYPE_UNKNOWN = "unknown"
 RESULTTYPE_GOOD = "good"
 RESULTTYPE_WARNING = "warning"
@@ -20,9 +16,8 @@ TESTRESULTTYPE_VALIDATIONFAILURE = "F"
 TESTRESULTTYPE_SECURE = "S"
 TESTRESULTTYPE_ERROR = "E"
 
-DNSDICT_AVAILABLE =False # check if our cool dnslookup to dict function is ready
 from dnsdict import dnsdict, dshash
-
+import sys
 
 class DNSInfoBroker(object):
     def __init__(self, domain = None):
@@ -487,3 +482,104 @@ class NSEC3PARAMOptOut(TestBase):
 all_tests=[AreWeSigned, HaveDS, DSDigestAlgo, RRSIGTimes,
 RRSIGForEachDSAlgorithm, DanglingDS, NumberOfDNSKEYs, KeyType, NSEC3HashAlgo, NSEC3PARAMOptOut
 ]
+
+
+# Console mode
+
+
+class FunkyConsole(object):
+
+    def __init__(self):
+        self.BG = {}
+        self.BG["black"] = "40"
+        self.BG["red"] = "41"
+        self.BG["green"] = "4"
+        self.BG["brown"] = "43"
+        self.BG["blue"] = "44"
+        self.BG["magenta"] = "45"
+        self.BG["cyan"] = "46"
+        self.BG["white"] = "47"
+
+        self.RESET = "\x1b[0m"
+
+        self.MODE = {}
+        self.MODE["default"] = "0"
+        self.MODE["bold"] = "1"
+        self.MODE["blink"] = "5"
+        self.MODE["noblink"] = "25"
+
+        self.FG = {}
+        self.FG["white"] = "00"
+        self.FG["black"] = "30"
+        self.FG["red"] = "31"
+        self.FG["green"] = "32"
+        self.FG["brown"] = "33"
+        self.FG["blue"] = "34"
+        self.FG["magenta"] = "35"
+        self.FG["cyan"] = "36"
+        self.FG["gray"] = "37"
+        # shortcuts
+        self.FG["yellow"] = self.FG["brown"] + ";" + self.MODE["bold"]
+
+    def strcolor(self, content, commandlist, resetAfter=True):
+        """returns the content encapsulated in the escapesequences to print coloured output"""
+        if type(commandlist) is str:
+            commandlist = (self.FG[commandlist],)
+        esc = self._buildescape(commandlist)
+        ret = esc + str(content)
+        if resetAfter:
+            ret = ret + self.RESET
+        return ret
+
+    def _buildescape(self, commandlist):
+        """builds escape sequences"""
+        escseq = "\x1b["
+        for cmd in commandlist:
+            if cmd != None:
+                escseq = escseq + cmd + ";"
+        escseq = escseq[0:-1]  # strip last ;
+        escseq = escseq + "m"
+        return escseq
+
+
+def main():
+    domain = sys.argv[1] # TODO: argparse, resolver ...
+    broker = DNSInfoBroker(domain)
+    console = FunkyConsole()
+    for testclass in all_tests:
+        testinstance = testclass(broker)
+        name = testinstance.name
+        description = testinstance.description
+
+
+
+        print(console.strcolor(name,[console.MODE["bold"],]))
+        print(console.strcolor("-"*len(name),[console.MODE["bold"],]))
+        print(description)
+
+        if not testinstance.do_we_have_what_we_need():
+            print("Test %s skipped - missing info" % testinstance.name)
+            continue
+
+        testinstance.run_test()
+
+        rtype = testinstance.result_type
+        if rtype == RESULTTYPE_GOOD:
+            print(console.strcolor('OK', [console.MODE['bold'],console.FG['green']]))
+        elif rtype== RESULTTYPE_BAD:
+            print(console.strcolor('BAD',[console.MODE['bold'],console.FG['red']]))
+        elif rtype == RESULTTYPE_WARNING:
+            print(console.strcolor('WARNING', 'yellow'))
+        else:
+            print(console.strcolor('UNKNOWN', 'gray'))
+
+        for message in testinstance.result_messages:
+            print("* %s"%message)
+
+        # abort tests
+        if testinstance.shortcircuit != None:
+            break
+
+
+        print()
+
