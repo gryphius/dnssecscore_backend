@@ -172,7 +172,7 @@ class DSDigestAlgo(TestBase):
         dsrecs = self.broker.get_records('DS')
         dnskeys = self.broker.get_records('DNSKEY')
         #print [x.keys() for x in dnskeys]
-        dnskeytags = set([key['i_key_tag'] for key in dnskeys if key['flags'] & 1 == 1 ])
+        dnskeytags = set([key['i_key_tag'] for key in dnskeys])
         dskeytags = set([ds['key_tag'] for ds in dsrecs])
 
         checkdskeytags = [tag for tag in  dnskeytags if tag in dskeytags]
