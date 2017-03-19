@@ -65,7 +65,11 @@ class DNSInfoBroker(object):
 
     def get_rrsigs(self, rtype):
         rtype = rtype.upper()
-        return self.domaininfo['LOCAL_DNSSEC'][rtype]['RRSIG']
+        for t in ('LOCAL_DNSSEC', 'REMOTE_DNSSEC'):
+            if 'RRSIG' in self.domaininfo[t][rtype]:
+                return self.domaininfo[t][rtype]['RRSIG']
+        return []
+
 
 class TestBase(object):
     def __init__(self,broker):
