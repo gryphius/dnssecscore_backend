@@ -132,7 +132,7 @@ class DNSSECTest(object):
             self.result_type = TESTRESULTTYPE_SECURE
 
         resultdict["result"] = self.result_type
-        resultdict["score"] = int(score)
+        resultdict["score"] = int(round(score))
 
         return resultdict
 
