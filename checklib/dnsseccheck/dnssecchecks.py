@@ -2,6 +2,7 @@ from __future__ import print_function
 import time
 from dns.dnssec import algorithm_to_text
 import argparse
+import traceback
 
 NXDOMAIN = None
 RESULTTYPE_UNKNOWN = "unknown"
@@ -618,6 +619,7 @@ def main():
 
     parser.add_argument("domain")
     parser.add_argument("-r","--resolver", help="DNSSEC validating resolver to use", default='8.8.8.8')
+    parser.add_argument("-a", "--all", help="Force running all tests, even if one would produce a shortcircuit result", action='store_true')
 
     args = parser.parse_args()
 
@@ -639,7 +641,14 @@ def main():
             print("Test %s skipped - missing info" % testinstance.name)
             continue
 
-        testinstance.run_test()
+        try:
+            testinstance.run_test()
+        except:
+            err = traceback.format_exc()
+            print(console.strcolor('The test failed to run', [console.MODE['bold'], console.FG['red']]))
+            print(err)
+            continue
+
 
         rtype = testinstance.result_type
         if rtype == RESULTTYPE_GOOD:
@@ -655,9 +664,11 @@ def main():
             print("* %s"%message)
 
         # abort tests
-        if testinstance.shortcircuit != None:
+        if not args.all and testinstance.shortcircuit != None:
             break
 
 
         print()
 
+if __name__=='__main__':
+    main()
